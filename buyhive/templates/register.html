@@ -7,7 +7,7 @@
 <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
 
-<link rel="stylesheet" href="static/css/base.css">
+<link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 
 <body>
@@ -16,13 +16,47 @@
 
 <h2>Create Account</h2>
 
-<form>
+<form method="post" action="">
+{% csrf_token %}
 
-<input type="text" placeholder="Full Name">
+{% if form.non_field_errors %}
+  <div class="alert alert-danger py-2">{{ form.non_field_errors|striptags }}</div>
+{% endif %}
 
-<input type="email" placeholder="Email">
+<div class="mb-2">
+  {{ form.full_name }}
+  {% if form.full_name.errors %}
+    <div class="text-danger small">{{ form.full_name.errors|striptags }}</div>
+  {% endif %}
+</div>
 
-<input type="password" placeholder="Password">
+<div class="mb-2">
+  {{ form.email }}
+  {% if form.email.errors %}
+    <div class="text-danger small">{{ form.email.errors|striptags }}</div>
+  {% endif %}
+</div>
+
+<div class="mb-2">
+  {{ form.password1 }}
+  {% if form.password1.errors %}
+    <div class="text-danger small">{{ form.password1.errors|striptags }}</div>
+  {% endif %}
+</div>
+
+<div class="mb-2">
+  {{ form.password2 }}
+  {% if form.password2.errors %}
+    <div class="text-danger small">{{ form.password2.errors|striptags }}</div>
+  {% endif %}
+</div>
+
+<div class="mb-2">
+  {{ form.account_type }}
+  {% if form.account_type.errors %}
+    <div class="text-danger small">{{ form.account_type.errors|striptags }}</div>
+  {% endif %}
+</div>
 
 <button type="submit">Register</button>
 

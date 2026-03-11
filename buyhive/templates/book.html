@@ -19,45 +19,18 @@
 
 <section class="products">
 
-<div class="card">
-
-<img src="images/rice.jpg">
-
-<h3>Rice</h3>
-
-<button onclick="buyProduct('Rice')">Buy</button>
-
-</div>
-
-<div class="card">
-
-<img src="images/fruits.jpg">
-
-<h3>Fruits</h3>
-
-<button onclick="buyProduct('Fruits')">Buy</button>
-
-</div>
-
-<div class="card">
-
-<img src="images/vegetables.jpg">
-
-<h3>Vegetables</h3>
-
-<button onclick="buyProduct('Vegetables')">Buy</button>
-
-</div>
-
-<div class="card">
-
-<img src="images/milk.jpg">
-
-<h3>Milk</h3>
-
-<button onclick="buyProduct('Milk')">Buy</button>
-
-</div>
+{% if items %}
+  {% for item in items %}
+  <div class="card">
+    <h3>{{ item.name }}</h3>
+    <p>{{ item.description|default:"" }}</p>
+    <p><strong>${{ item.price }}</strong></p>
+    <button type="button" class="btn btn-success" onclick="buyProduct('{{ item.name|escapejs }}')">Buy</button>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="p-3">No items yet. If you are a seller, add items from your dashboard.</p>
+{% endif %}
 
 </section>
 
