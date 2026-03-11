@@ -1,4 +1,4 @@
-#!/home/emobilis/shopora/myenv/bin/python3
+#!/home/sidz/shopora/myenv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
