@@ -12,9 +12,9 @@
     <h2 class="text-center text-decoration-underline">Seller Dashboard</h2>
     <a  class="btn btn-primary" href="{% url 'index' %}">Home</a>
 
-
-    <div class="mt-3 d-flex gap-2">
-      <div class="card p-4 align-items-center gap-4">
+    <!-- Card -->
+    <div class="mt-3 d-flex gap-2 justify-content-center">
+      <div class="card p-4 gap-4 w-100 shadow-lg">
       <a class="btn btn-primary" href="{% url 'seller_items' %}">My Items</a>
       <a class="btn btn-outline-secondary" href="{% url 'items_public' %}">Browse Items</a>
       <a class="btn btn-outline-danger" href="{% url 'logout' %}">Logout</a>
