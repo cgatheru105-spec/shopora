@@ -86,3 +86,23 @@ class ItemForm(forms.ModelForm):
         self.fields["name"].widget.attrs.update({"class": "form-control"})
         self.fields["description"].widget.attrs.update({"class": "form-control", "rows": 4})
         self.fields["price"].widget.attrs.update({"class": "form-control"})
+
+
+class ProfilePictureForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ("profile_picture",)
+        widgets = {
+            "profile_picture": forms.ClearableFileInput(
+                attrs={"class": "form-control", "accept": "image/*"}
+            )
+        }
+
+    def clean_profile_picture(self):
+        file = self.cleaned_data.get("profile_picture")
+        if not file:
+            return file
+        content_type = getattr(file, "content_type", "") or ""
+        if not content_type.startswith("image/"):
+            raise ValidationError("Please upload an image file.")
+        return file

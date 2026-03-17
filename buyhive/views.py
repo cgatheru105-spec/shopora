@@ -6,8 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .forms import ItemForm, LoginForm, RegisterForm
-from .models import Item, Profile
+from .forms import ItemForm, LoginForm, ProfilePictureForm, RegisterForm
+from .models import Item, ItemImage, Profile
 
 # Create your views here.
 def index(request):
@@ -73,16 +73,31 @@ def dashboard(request):
     profile = _get_or_create_profile(request.user)
 
     if request.user.is_staff or (profile and profile.account_type == Profile.ACCOUNT_STAFF):
-        return render(request, "admin/admindashboard.html")
+        return render(request, "admin/admindashboard.html", {"profile": profile})
 
     if profile and profile.account_type == Profile.ACCOUNT_SELLER:
-        return render(request, "seller/dashboard.html")
+        return render(request, "seller/dashboard.html", {"profile": profile})
 
-    return render(request, "buyer/dashboard.html")
+    return render(request, "buyer/dashboard.html", {"profile": profile})
+
+
+@login_required
+def profile_edit(request):
+    profile = _get_or_create_profile(request.user)
+    form = ProfilePictureForm(request.POST or None, request.FILES or None, instance=profile)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Profile updated.")
+        return redirect("dashboard")
+    return render(request, "profile_edit.html", {"form": form, "profile": profile})
 
 
 def items_public_list(request):
-    items = Item.objects.select_related("owner").order_by("-created_at")
+    items = (
+        Item.objects.select_related("owner")
+        .prefetch_related("images")
+        .order_by("-created_at")
+    )
     return render(request, "items/public_list.html", {"items": items})
 
 
@@ -97,8 +112,12 @@ def _seller_required(request):
 def seller_items(request):
     if not _seller_required(request):
         raise Http404()
-    items = Item.objects.filter(owner=request.user).order_by("-created_at")
+    items = Item.objects.filter(owner=request.user).prefetch_related("images").order_by("-created_at")
     return render(request, "seller/items_list.html", {"items": items})
+
+def _is_image_upload(upload) -> bool:
+    content_type = getattr(upload, "content_type", "") or ""
+    return bool(content_type.startswith("image/"))
 
 
 @login_required
@@ -107,9 +126,15 @@ def seller_item_create(request):
         raise Http404()
     form = ItemForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
+        uploads = request.FILES.getlist("images")
+        if any(not _is_image_upload(upload) for upload in uploads):
+            messages.error(request, "Please upload only image files.")
+            return render(request, "seller/item_form.html", {"form": form, "mode": "create"})
         item = form.save(commit=False)
         item.owner = request.user
         item.save()
+        for upload in uploads:
+            ItemImage.objects.create(item=item, image=upload)
         messages.success(request, "Item created.")
         return redirect("seller_items")
     return render(request, "seller/item_form.html", {"form": form, "mode": "create"})
@@ -122,7 +147,17 @@ def seller_item_update(request, pk: int):
     item = get_object_or_404(Item, pk=pk, owner=request.user)
     form = ItemForm(request.POST or None, instance=item)
     if request.method == "POST" and form.is_valid():
+        uploads = request.FILES.getlist("images")
+        if any(not _is_image_upload(upload) for upload in uploads):
+            messages.error(request, "Please upload only image files.")
+            return render(
+                request,
+                "seller/item_form.html",
+                {"form": form, "mode": "edit", "item": item},
+            )
         form.save()
+        for upload in uploads:
+            ItemImage.objects.create(item=item, image=upload)
         messages.success(request, "Item updated.")
         return redirect("seller_items")
     return render(

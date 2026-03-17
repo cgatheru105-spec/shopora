@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<body class="bg-light">
+  <div class="container py-4" style="max-width: 720px;">
+    <h2 class="mb-3">Edit Profile</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if profile.profile_picture %}
+      <div class="mb-3">
+        <div class="text-muted mb-2">Current picture</div>
+        <img
+          src="{{ profile.profile_picture.url }}"
+          alt="Profile picture"
+          style="width: 96px; height: 96px; object-fit: cover; border-radius: 999px;"
+        />
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Profile picture</label>
+        {{ form.profile_picture }}
+        {% if form.profile_picture.errors %}
+          <div class="text-danger small mt-1">{{ form.profile_picture.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-outline-secondary" href="{% url 'dashboard' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</body>
+{% endblock %}

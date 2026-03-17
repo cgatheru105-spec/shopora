@@ -60,6 +60,11 @@
     <div class="col-12 col-md-6 col-lg-4">
 
       <div class="card h-100 shadow-sm border-0">
+        {% with first_image=item.images.first %}
+          {% if first_image %}
+            <img src="{{ first_image.image.url }}" class="card-img-top" alt="Item image" style="height: 180px; object-fit: cover;" />
+          {% endif %}
+        {% endwith %}
 
         <div class="card-body">
           <h5 class="card-title text-success fw-bold">{{ item.name }}</h5>

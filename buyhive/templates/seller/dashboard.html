@@ -8,7 +8,14 @@
     <!-- Card -->
     <div class="mt-3 d-flex gap-2 justify-content-center">
       <div class="card p-4 gap-4 w-100 shadow-lg">
+      {% if profile and profile.profile_picture %}
+      <div class="d-flex align-items-center gap-3">
+        <img src="{{ profile.profile_picture.url }}" alt="Profile picture" style="width: 56px; height: 56px; object-fit: cover; border-radius: 999px;" />
+        <div class="text-muted">Signed in as {{ user.username }}</div>
+      </div>
+      {% endif %}
       <a class="btn btn-primary" href="{% url 'seller_items' %}">My Items</a>
+      <a class="btn btn-outline-secondary" href="{% url 'profile_edit' %}">Edit Profile</a>
       <a class="btn btn-outline-secondary" href="{% url 'items_public' %}">Browse Items</a>
       <a class="btn btn-outline-danger" href="{% url 'logout' %}">Logout</a>
       </div>

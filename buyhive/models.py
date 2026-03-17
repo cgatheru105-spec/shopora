@@ -18,6 +18,7 @@ class Profile(models.Model):
     account_type = models.CharField(
         max_length=10, choices=ACCOUNT_TYPES, default=ACCOUNT_BUYER
     )
+    profile_picture = models.FileField(upload_to="profiles/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
@@ -35,3 +36,12 @@ class Item(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class ItemImage(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="images")
+    image = models.FileField(upload_to="items/")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Image for {self.item_id}"

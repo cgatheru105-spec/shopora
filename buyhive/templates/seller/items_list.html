@@ -33,6 +33,7 @@
           <table class="table table-hover align-middle">
             <thead class="table-success">
               <tr>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Price</th>
                 <th class="text-end">Actions</th>
@@ -42,6 +43,15 @@
             <tbody>
               {% for item in items %}
               <tr>
+                <td style="width: 72px;">
+                  {% with first_image=item.images.first %}
+                    {% if first_image %}
+                      <img src="{{ first_image.image.url }}" alt="Item image" style="width: 56px; height: 56px; object-fit: cover; border-radius: 8px;" />
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
                 <td>{{ item.name }}</td>
                 <td>${{ item.price }}</td>
 
