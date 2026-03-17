@@ -277,11 +277,10 @@ text-decoration:underline;
 <p>Healthy • Sustainable • Affordable</p>
 
 <div class="search-bar">
-
-<input type="text" placeholder="Search groceries...">
-
-<button>Search</button>
-
+  <form action="{% url 'book' %}" method="get" class="d-flex w-100">
+    <input name="q" type="text" placeholder="Search groceries...">
+    <button type="submit">Search</button>
+  </form>
 </div>
 
 <a href="{% url 'book' %}" class="btn btn-success mt-4 px-4">Shop Now</a>
@@ -449,7 +448,7 @@ text-decoration:underline;
 
 <div class="col-md-4 footer-links">
 <h5>Quick Links</h5>
-<a href="book.html">Products</a>
+<a href="#">Products</a>
 <a href="#">About</a>
 <a href="#">Contact</a>
 </div>
