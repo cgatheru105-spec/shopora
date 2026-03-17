@@ -1,50 +1,45 @@
 {%extends 'base.html'%}
 {%block content%}
-<body class="bg-light">
-  <div class="container py-4" style="max-width: 720px;">
-    <h2 class="mb-3 bg-success">{% if mode == "edit" %}Edit{% else %}Add{% endif %} Item</h2>
+  <div class="mx-auto" style="max-width: 720px;">
+    <h1 class="bh-page-title h3 mb-3">{% if mode == "edit" %}Edit{% else %}Add{% endif %} Item</h1>
 
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="form-label">Name</label>
-        {{ form.name }}
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Description</label>
-        {{ form.description }}
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Price</label>
-        {{ form.price }}
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Product images</label>
-        <input class="form-control" type="file" name="images" accept="image/*" multiple />
-        <div class="form-text">You can select multiple images.</div>
-      </div>
-
-      {% if mode == "edit" and item and item.images.exists %}
-      <div class="mb-3">
-        <div class="text-muted mb-2">Existing images</div>
-        <div class="d-flex flex-wrap gap-2">
-          {% for img in item.images.all %}
-            <img src="{{ img.image.url }}" alt="Product image" style="width: 96px; height: 96px; object-fit: cover; border-radius: 8px;" />
-          {% endfor %}
+    <div class="bh-surface p-4">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Name</label>
+          {{ form.name }}
         </div>
-      </div>
-      {% endif %}
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary" type="submit">Save</button>
-        <a class="btn btn-outline-secondary" href="{% url 'seller_items' %}">Cancel</a>
-      </div>
-    </form>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          {{ form.description }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Price</label>
+          {{ form.price }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Product images</label>
+          <input class="form-control" type="file" name="images" accept="image/*" multiple />
+          <div class="form-text">You can select multiple images.</div>
+        </div>
+
+        {% if mode == "edit" and item and item.images.exists %}
+        <div class="mb-3">
+          <div class="text-muted mb-2">Existing images</div>
+          <div class="d-flex flex-wrap gap-2">
+            {% for img in item.images.all %}
+              <img src="{{ img.image.url }}" alt="Product image" style="width: 96px; height: 96px; object-fit: cover; border-radius: 8px;" />
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-success" type="submit">Save</button>
+          <a class="btn btn-outline-secondary" href="{% url 'seller_items' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
   </div>
-</body>
 {%endblock%}

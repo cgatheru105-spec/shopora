@@ -7,7 +7,7 @@ from .models import Item, Profile
 
 
 class RegisterForm(forms.Form):
-    full_name = forms.CharField(max_length=150, required=False)
+    username = forms.CharField(max_length=150, required=True)
     email = forms.EmailField(required=True)
     password1 = forms.CharField(widget=forms.PasswordInput)
     password2 = forms.CharField(widget=forms.PasswordInput)
@@ -21,8 +21,8 @@ class RegisterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["full_name"].widget.attrs.update(
-            {"class": "form-control", "placeholder": "Full name"}
+        self.fields["username"].widget.attrs.update(
+            {"class": "form-control", "placeholder": "Username"}
         )
         self.fields["email"].widget.attrs.update(
             {"class": "form-control", "placeholder": "Email"}
@@ -35,9 +35,17 @@ class RegisterForm(forms.Form):
         )
         self.fields["account_type"].widget.attrs.update({"class": "form-select"})
 
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        if not username:
+            raise ValidationError("Please enter a username.")
+        if User.objects.filter(username__iexact=username).exists():
+            raise ValidationError("This username is already taken.")
+        return username
+
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
-        if User.objects.filter(username=email).exists() or User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
             raise ValidationError("An account with this email already exists.")
         return email
 
@@ -53,9 +61,9 @@ class RegisterForm(forms.Form):
 
     def save(self, commit=True):
         email = self.cleaned_data["email"].strip().lower()
+        username = self.cleaned_data["username"].strip()
         password = self.cleaned_data["password1"]
-        user = User(username=email, email=email)
-        user.first_name = (self.cleaned_data.get("full_name") or "").strip()
+        user = User(username=username, email=email)
         user.set_password(password)
         if commit:
             user.save()
@@ -97,6 +105,46 @@ class ProfilePictureForm(forms.ModelForm):
                 attrs={"class": "form-control", "accept": "image/*"}
             )
         }
+
+
+class ItemFilterForm(forms.Form):
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Search items..."
+        })
+    )
+    min_price = forms.DecimalField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            "class": "form-control",
+            "placeholder": "Min price",
+            "step": "0.01"
+        })
+    )
+    max_price = forms.DecimalField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            "class": "form-control",
+            "placeholder": "Max price",
+            "step": "0.01"
+        })
+    )
+    sort_by = forms.ChoiceField(
+        required=False,
+        choices=[
+            ("-created_at", "Newest first"),
+            ("created_at", "Oldest first"),
+            ("price", "Price: Low to High"),
+            ("-price", "Price: High to Low"),
+            ("name", "Name: A to Z"),
+            ("-name", "Name: Z to A"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
 
     def clean_profile_picture(self):
         file = self.cleaned_data.get("profile_picture")

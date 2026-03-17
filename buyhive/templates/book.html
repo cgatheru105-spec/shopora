@@ -1,405 +1,79 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>EcoMart | Fresh Organic Products</title>
-
-<!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Google Font -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="{% static 'css/base.css' %}">
-
-<style>
-
-body{
-font-family:'Poppins',sans-serif;
-background:#f4fff6;
-}
-
-/* NAVBAR */
-
-.navbar-custom{
-background:white;
-box-shadow:0 5px 20px rgba(0,0,0,0.08);
-padding:15px 60px;
-}
-
-.logo-img{
-width:45px;
-margin-right:10px;
-}
-
-.logo-text{
-font-weight:700;
-color:#2e7d32;
-font-size:22px;
-}
-
-.nav-link{
-font-weight:500;
-color:#444 !important;
-margin-left:15px;
-}
-
-.nav-link:hover{
-color:#2e7d32 !important;
-}
-
-/* HERO SECTION */
-
-.hero{
-background:linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3)),
-url("{% static 'images/grocery-banner.jpg' %}");
-background-size:cover;
-background-position:center;
-padding:90px 20px;
-text-align:center;
-color:white;
-}
-
-.hero h1{
-font-size:45px;
-font-weight:700;
-}
-
-.hero p{
-font-size:18px;
-margin-top:10px;
-}
-
-/* SEARCH BAR */
-
-.search-bar{
-max-width:500px;
-margin:auto;
-margin-top:25px;
-}
-
-/* PAGE TITLE */
-
-.page-title{
-margin-top:60px;
-margin-bottom:40px;
-text-align:center;
-color:#2e7d32;
-font-weight:600;
-}
-
-/* PRODUCT CARDS */
-
-.product-card{
-border:none;
-border-radius:18px;
-overflow:hidden;
-box-shadow:0 6px 20px rgba(0,0,0,0.08);
-transition:0.35s;
-background:white;
-position:relative;
-}
-
-.product-card:hover{
-transform:translateY(-10px);
-box-shadow:0 18px 40px rgba(0,0,0,0.18);
-}
-
-.product-card img{
-height:200px;
-object-fit:cover;
-}
-
-/* BADGES */
-
-.badge-organic{
-position:absolute;
-top:15px;
-left:15px;
-background:#4CAF50;
-}
-
-/* PRICE */
-
-.price{
-font-weight:600;
-font-size:18px;
-color:#2e7d32;
-}
-
-/* RATING */
-
-.rating{
-color:gold;
-font-size:14px;
-}
-
-/* BUTTONS */
-
-.buy-btn{
-background:#4CAF50;
-border:none;
-border-radius:30px;
-padding:8px 20px;
-margin-top:8px;
-}
-
-.buy-btn:hover{
-background:#2e7d32;
-}
-
-.cart-btn{
-border-radius:30px;
-padding:8px 20px;
-}
-
-/* EMPTY MESSAGE */
-
-.empty-message{
-text-align:center;
-margin-top:80px;
-font-size:18px;
-color:#777;
-}
-
-/* FOOTER */
-
-.footer{
-margin-top:80px;
-background:#1b5e20;
-color:white;
-padding:40px 20px;
-}
-
-.footer a{
-color:#a5d6a7;
-text-decoration:none;
-}
-
-.footer a:hover{
-color:white;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-
-<nav class="navbar navbar-expand-lg navbar-light navbar-custom">
-
-<div class="container">
-
-<a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
-<img src="{% static 'images/logo.png' %}" class="logo-img">
-<span class="logo-text">EcoMart</span>
-</a>
-
-<button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
-<span class="navbar-toggler-icon"></span>
-</button>
-
-<div class="collapse navbar-collapse" id="menu">
-
-<ul class="navbar-nav ms-auto">
-
-<li class="nav-item">
-<a class="nav-link" href="{% url 'index' %}">Home</a>
-</li>
-
-<li class="nav-item">
-<a class="nav-link active" href="{% url 'book' %}">Products</a>
-</li>
-
-{% if user.is_authenticated %}
-
-<li class="nav-item">
-<a class="nav-link" href="{% url 'dashboard' %}">Profile</a>
-</li>
-
-<li class="nav-item">
-<a class="nav-link" href="{% url 'logout' %}">Logout</a>
-</li>
-
-{% else %}
-
-<li class="nav-item">
-<a class="nav-link" href="{% url 'login' %}">Login</a>
-</li>
-
-<li class="nav-item">
-<a class="nav-link" href="{% url 'register' %}">Register</a>
-</li>
-
-{% endif %}
-
-</ul>
-
-</div>
-
-</div>
-
-</nav>
-
-<!-- HERO SECTION -->
-
-<section class="hero">
-
-<h1>Fresh Organic Groceries</h1>
-<p>Healthy food delivered straight to your home</p>
-
-<div class="search-bar">
-
-<div class="input-group">
-<input type="text" class="form-control" placeholder="Search products...">
-<button class="btn btn-success">Search</button>
-</div>
-
-</div>
-
-</section>
-
-
-<!-- PAGE TITLE -->
-
-<h2 class="page-title">Shop Fresh Products 🛒</h2>
-
-
-<!-- PRODUCTS -->
-
-<div class="container">
-
-{% if items %}
-
-<div class="row g-4">
-
-{% for item in items %}
-
-<div class="col-lg-3 col-md-4 col-sm-6">
-
-<div class="card product-card">
-
-<span class="badge badge-organic">Organic</span>
-
-{% if item.image %}
-<img src="{{ item.image.url }}" class="card-img-top">
-{% else %}
-<img src="{% static 'images/default-product.jpg' %}" class="card-img-top">
-{% endif %}
-
-<div class="card-body text-center">
-
-<h5>{{ item.name }}</h5>
-
-<p class="text-muted">
-{{ item.description|default:"Fresh quality product from EcoMart" }}
-</p>
-
-<div class="rating">
-★★★★★
-</div>
-
-<p class="price">KSh {{ item.price }}</p>
-
-<div class="d-flex justify-content-center gap-2">
-
-<button
-class="btn buy-btn text-white"
-onclick="buyProduct('{{ item.name|escapejs }}')"
->
-Buy Now
-</button>
-
-<button class="btn btn-outline-success cart-btn">
-Add Cart
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-{% endfor %}
-
-</div>
-
-{% else %}
-
-<p class="empty-message">
-No products available yet.<br>
-If you are a seller, add items from your dashboard.
-</p>
-
-{% endif %}
-
-</div>
-
-<!-- FOOTER -->
-
-<footer class="footer">
-
-<div class="container">
-
-<div class="row">
-
-<div class="col-md-4">
-
-<h5>EcoMart</h5>
-<p>Your trusted marketplace for fresh and organic groceries.</p>
-
-</div>
-
-<div class="col-md-4">
-
-<h5>Quick Links</h5>
-
-<ul class="list-unstyled">
-
-<li><a href="{% url 'index' %}">Home</a></li>
-<li><a href="{% url 'book' %}">Products</a></li>
-<li><a href="#">Contact</a></li>
-
-</ul>
-
-</div>
-
-<div class="col-md-4">
-
-<h5>Support</h5>
-
-<p>Email: support@ecomart.com</p>
-<p>Phone: +254 700 000 000</p>
-
-</div>
-
-</div>
-
-<hr>
-
-<p class="text-center mb-0">
-© 2026 EcoMart. All Rights Reserved.
-</p>
-
-</div>
-
-</footer>
-
-
-<!-- Bootstrap JS -->
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-
-<script src="{% static 'js/script.js' %}"></script>
-
-</body>
-</html>
+{% block title %}Products · EcoMart Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-hero mb-4" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
+    <div class="bh-hero-inner">
+      <h1 class="display-6 mb-2">Fresh organic groceries</h1>
+      <p class="lead mb-0">Healthy food delivered straight to your home</p>
+
+	      <div class="bh-search">
+	        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg">
+	          <input name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search products..." aria-label="Search products">
+	          <button class="btn btn-success" type="submit">Search</button>
+	        </form>
+	      </div>
+    </div>
+  </section>
+
+  <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+    <h2 class="bh-section-title h4 mb-0">Shop products</h2>
+    <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Browse marketplace</a>
+  </div>
+
+  {% if items %}
+    <div class="row g-3">
+      {% for item in items %}
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="card bh-product-card h-100">
+            <div class="position-relative">
+              <span class="badge text-bg-success position-absolute top-0 start-0 m-3">Organic</span>
+
+              {% with first_image=item.images.first %}
+                {% if first_image %}
+                  <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                {% elif item.image %}
+                  <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                {% else %}
+                  <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+                {% endif %}
+              {% endwith %}
+            </div>
+
+            <div class="card-body">
+	              <div class="fw-semibold">{{ item.name }}</div>
+	              <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
+	              <div class="small text-warning" aria-label="Rating: 5 out of 5">*****</div>
+	              <div class="bh-price mt-2">${{ item.price }}</div>
+	            </div>
+
+            <div class="card-footer bg-transparent border-0">
+              <div class="d-grid gap-2">
+                <button class="btn btn-success" onclick="buyProduct('{{ item.name|escapejs }}')">Buy now</button>
+                <button class="btn btn-outline-success">Add to cart</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+	  {% else %}
+	    <div class="alert alert-info bh-surface">
+	      {% if q %}
+	        No products found for "{{ q }}".
+	      {% else %}
+	        No products available yet. If you are a seller, add items from your dashboard.
+	      {% endif %}
+	    </div>
+	  {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/script.js' %}"></script>
+{% endblock %}

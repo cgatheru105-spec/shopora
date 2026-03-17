@@ -1,99 +1,78 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Items</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
 
-<body class="bg-light">
+{% block title %}Browse Items · EcoMart Shopora{% endblock %}
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'index' %}">Shopora</a>
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto align-items-center">
-
-        <li class="nav-item">
-          <a class="nav-link text-white" href="{% url 'index' %}">Home</a>
-        </li>
-
-        {% if user.is_authenticated %}
-
-        <li class="nav-item">
-          <a class="nav-link text-white" href="{% url 'dashboard' %}">Dashboard</a>
-        </li>
-
-        <li class="nav-item">
-          <a class="btn btn-light ms-2" href="{% url 'logout' %}">Logout</a>
-        </li>
-
-        {% else %}
-
-        <li class="nav-item">
-          <a class="btn btn-light ms-2" href="{% url 'login' %}">Login</a>
-        </li>
-
-        {% endif %}
-      </ul>
-    </div>
+{% block content %}
+  <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+    <h1 class="bh-page-title h3 mb-0">Browse Items</h1>
+    {% if user.is_authenticated %}
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
+    {% else %}
+      <a class="btn btn-success btn-sm" href="{% url 'login' %}">Login</a>
+    {% endif %}
   </div>
-</nav>
 
-<!-- Content -->
-<div class="container py-4">
-
-  <h2 class="mb-4">Items</h2>
+	  <div class="bh-surface p-3 p-md-4 mb-3">
+	    <form method="get" class="row g-2 align-items-end">
+	      <div class="col-12 col-md-4">
+	        <label for="{{ filter_form.search.id_for_label }}" class="form-label small text-muted">Search</label>
+	        {{ filter_form.search }}
+	      </div>
+	      <div class="col-6 col-md-2">
+	        <label for="{{ filter_form.min_price.id_for_label }}" class="form-label small text-muted">Min</label>
+	        {{ filter_form.min_price }}
+	      </div>
+	      <div class="col-6 col-md-2">
+	        <label for="{{ filter_form.max_price.id_for_label }}" class="form-label small text-muted">Max</label>
+	        {{ filter_form.max_price }}
+	      </div>
+	      <div class="col-12 col-md-3">
+	        <label for="{{ filter_form.sort_by.id_for_label }}" class="form-label small text-muted">Sort</label>
+	        {{ filter_form.sort_by }}
+	      </div>
+	      <div class="col-12 col-md-1 d-grid">
+	        <button type="submit" class="btn btn-success">Go</button>
+	      </div>
+	      {% if request.GET %}
+	        <div class="col-12">
+	          <a href="{% url 'items_public' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+	        </div>
+	      {% endif %}
+	    </form>
+	  </div>
 
   {% if items %}
-  <div class="row g-4">
+    <div class="row g-3">
+      {% for item in items %}
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card bh-product-card h-100">
+            {% with first_image=item.images.first %}
+              {% if first_image %}
+                <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
+              {% else %}
+                <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+              {% endif %}
+            {% endwith %}
 
-    {% for item in items %}
-    <div class="col-12 col-md-6 col-lg-4">
+            <div class="card-body">
+              <div class="fw-semibold text-success">{{ item.name }}</div>
+              <div class="text-muted small">{{ item.description|default:"No description available" }}</div>
+            </div>
 
-      <div class="card h-100 shadow-sm border-0">
-        {% with first_image=item.images.first %}
-          {% if first_image %}
-            <img src="{{ first_image.image.url }}" class="card-img-top" alt="Item image" style="height: 180px; object-fit: cover;" />
-          {% endif %}
-        {% endwith %}
-
-        <div class="card-body">
-          <h5 class="card-title text-success fw-bold">{{ item.name }}</h5>
-          <p class="card-text text-muted">
-            {{ item.description|default:"No description available" }}
-          </p>
+            <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
+              <span class="bh-price">${{ item.price }}</span>
+              <small class="text-muted">by {{ item.owner.username }}</small>
+            </div>
+          </div>
         </div>
-
-        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-          <span class="fw-bold text-success">${{ item.price }}</span>
-          <small class="text-muted">by {{ item.owner.username }}</small>
-        </div>
-
-      </div>
-
+      {% endfor %}
     </div>
-    {% endfor %}
-
-  </div>
-
   {% else %}
-  <div class="alert alert-success text-center">
-    No items available yet.
-  </div>
+    <div class="alert alert-info bh-surface">No items available yet.</div>
   {% endif %}
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-</html>
+{% endblock %}

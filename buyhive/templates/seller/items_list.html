@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block content %}
+{% block navbar %}
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
@@ -8,26 +8,22 @@
 
     <div class="ms-auto d-flex gap-2">
       <a class="btn btn-light btn-sm" href="{% url 'seller_item_create' %}">Add Item</a>
+      <a class="btn btn-outline-light btn-sm" href="{% url 'profile_edit' %}">Profile</a>
+      <a class="btn btn-outline-light btn-sm" href="{% url 'profiles_search' %}">Profiles</a>
       <a class="btn btn-outline-light btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
       <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">Logout</a>
     </div>
   </div>
 </nav>
 
-<!-- Page Content -->
-<div class="container py-4">
+{% endblock %}
+
+{% block content %}
 
   <h2 class="mb-4 text-success">My Items</h2>
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-
   {% if items %}
-    <div class="card shadow-sm">
-      <div class="card-body">
+    <div class="bh-surface p-3 p-md-4">
 
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -73,7 +69,6 @@
           </table>
         </div>
 
-      </div>
     </div>
 
   {% else %}
@@ -81,7 +76,5 @@
       No items yet.
     </div>
   {% endif %}
-
-</div>
 
 {% endblock %}
