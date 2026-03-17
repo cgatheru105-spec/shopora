@@ -1,80 +1,473 @@
-{%load static%}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>EcoMart Grocery</title>
 
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link rel="stylesheet" href="{% static 'css/base.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Poppins',sans-serif;
+background:#f4fff6;
+}
+
+/* NAVBAR */
+
+.navbar-custom{
+background:white;
+box-shadow:0 4px 20px rgba(0,0,0,0.05);
+padding:15px 60px;
+}
+
+.logo-img{
+width:45px;
+margin-right:10px;
+}
+
+.logo-text{
+font-weight:700;
+color:#2e7d32;
+font-size:22px;
+}
+
+.nav-link{
+font-weight:500;
+color:#444 !important;
+margin-left:15px;
+}
+
+.nav-link:hover{
+color:#2e7d32 !important;
+}
+
+/* HERO SECTION */
+
+.hero{
+
+height:85vh;
+
+background:
+linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),
+url("https://images.unsplash.com/photo-1542838132-92c53300491e");
+
+background-size:cover;
+background-position:center;
+
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+color:white;
+}
+
+.hero-content{
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(10px);
+padding:50px;
+border-radius:20px;
+}
+
+.hero h1{
+font-size:60px;
+font-weight:700;
+}
+
+.hero p{
+font-size:20px;
+margin-top:10px;
+}
+
+.search-bar{
+margin-top:25px;
+}
+
+.search-bar input{
+border-radius:30px;
+padding:12px 20px;
+border:none;
+width:300px;
+}
+
+.search-bar button{
+border-radius:30px;
+padding:10px 25px;
+background:#4CAF50;
+border:none;
+color:white;
+}
+
+/* CATEGORY SECTION */
+
+.categories{
+margin-top:70px;
+}
+
+.category-box{
+background:white;
+padding:30px;
+border-radius:15px;
+text-align:center;
+box-shadow:0 6px 20px rgba(0,0,0,0.08);
+transition:0.3s;
+}
+
+.category-box:hover{
+transform:translateY(-8px);
+box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+
+.category-box img{
+width:60px;
+margin-bottom:10px;
+}
+
+/* PRODUCTS */
+
+.section-title{
+margin-top:80px;
+margin-bottom:40px;
+color:#2e7d32;
+font-weight:600;
+}
+
+.product-card{
+
+border:none;
+border-radius:18px;
+overflow:hidden;
+box-shadow:0 6px 20px rgba(0,0,0,0.08);
+transition:0.3s;
+}
+
+.product-card:hover{
+transform:translateY(-10px);
+box-shadow:0 15px 35px rgba(0,0,0,0.18);
+}
+
+.product-card img{
+height:220px;
+object-fit:cover;
+}
+
+.price{
+font-weight:600;
+font-size:18px;
+color:#2e7d32;
+}
+
+.buy-btn{
+background:#4CAF50;
+border:none;
+border-radius:30px;
+padding:8px 20px;
+}
+
+.buy-btn:hover{
+background:#2e7d32;
+}
+
+/* FOOTER */
+
+footer{
+margin-top:100px;
+background:#1b5e20;
+color:white;
+padding:40px;
+}
+
+.footer-links a{
+color:white;
+text-decoration:none;
+display:block;
+margin-bottom:8px;
+}
+
+.footer-links a:hover{
+text-decoration:underline;
+}
+
+</style>
+
 </head>
+
 
 <body>
 
-<nav class="navbar">
-<div class="logo d-flex align-items-center">
-<img src="{% static 'images/logo.png' %}" alt="EcoMart Logo" class="logo-img w-25 h-20">
-<h2>EcoMart</h2>
+
+<!-- NAVBAR -->
+
+<nav class="navbar navbar-expand-lg navbar-custom">
+
+<div class="container">
+
+<a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
+
+<img src="{% static 'images/logo.png' %}" class="logo-img">
+
+<span class="logo-text">EcoMart</span>
+
+</a>
+
+<button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#menu">
+
+<span class="navbar-toggler-icon"></span>
+
+</button>
+
+<div class="collapse navbar-collapse" id="menu">
+
+<ul class="navbar-nav ms-auto">
+
+<li class="nav-item">
+<a class="nav-link" href="{% url 'index' %}">Home</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="{% url 'book' %}">Products</a>
+</li>
+
+{% if user.is_authenticated %}
+
+<li class="nav-item">
+<a class="nav-link" href="{% url 'dashboard' %}">Profile</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="{% url 'logout' %}">Logout</a>
+</li>
+
+{% else %}
+
+<li class="nav-item">
+<a class="nav-link" href="{% url 'login' %}">Login</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="{% url 'register' %}">Register</a>
+</li>
+
+{% endif %}
+
+</ul>
+
 </div>
 
-<li><a href="{%url 'index'%}">Home</a></li>
-<li><a href="{% url 'book' %}">Products</a></li>
-{% if user.is_authenticated %}
-<li><a href="{% url 'dashboard' %}">Profile</a></li>
-<li><a href="{% url 'logout' %}">Logout</a></li>
-{% else %}
-<li><a href="{% url 'login'%}">Login</a></li>
-<li><a href="{% url 'register'%}">Register</a></li>
-{% endif %}
+</div>
+
 </nav>
 
-<header class="hero">
+
+<!-- HERO -->
+
+<section class="hero">
+
+<div class="hero-content">
 
 <h1>Fresh Groceries Everyday 🌿</h1>
+
 <p>Healthy • Sustainable • Affordable</p>
 
-<a href="{% url 'book' %}" class="btn">Shop Now</a>
+<div class="search-bar">
 
-</header>
+<input type="text" placeholder="Search groceries...">
 
-<section class="featured">
+<button>Search</button>
 
-<h2 class="text-center mt-3 text-decoration-underline">Popular Products</h2>
-
-<div class="products">
-
-    <div class="card">
-        <img src="{% static 'images/Download Bowl of Cooked Rice isolated on transparent background for free.jpeg'%}">
-            <h3>Rice</h3>
-                <p>Premium organic rice</p>
 </div>
 
-<div class="card">
-    <img src="{% static 'images/A colorful assortment of fruits and vegetables, including apples, oranges.jpeg' %}">
-        <h3>Fruits</h3>
-            <p>Fresh seasonal fruits</p>
-</div>
-
-<div class="card">
-    <img src="{% static 'images/Fresh organic vegetables including bell peppers, carrots, lettuce, broccoli, cauliflower, and onions, isolated on a white background_.jpeg' %}">
-        <h3>Vegetables</h3>
-            <p>Farm fresh vegetables</p>
-</div>
-
-<div class="card">
-    <img src="{% static 'images/milk.jpeg' %}">
-        <h3>Milk</h3>
-            <p>Natural dairy products</p>
-</div>
+<a href="{% url 'book' %}" class="btn btn-success mt-4 px-4">Shop Now</a>
 
 </div>
 
 </section>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+<!-- CATEGORIES -->
+
+<div class="container categories">
+
+<div class="row g-4">
+
+<div class="col-md-3">
+<div class="category-box">
+<img src="https://img.icons8.com/color/96/apple.png">
+<h5>Fruits</h5>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="category-box">
+<img src="https://img.icons8.com/color/96/broccoli.png">
+<h5>Vegetables</h5>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="category-box">
+<img src="https://img.icons8.com/color/96/milk-bottle.png">
+<h5>Dairy</h5>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="category-box">
+<img src="https://img.icons8.com/color/96/rice-bowl.png">
+<h5>Grains</h5>
+</div>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- PRODUCTS -->
+
+<div class="container">
+
+<h2 class="text-center section-title">Popular Products</h2>
+
+<div class="row g-4">
+
+<div class="col-md-3">
+
+<div class="card product-card">
+
+<img src="{% static 'images/Download Bowl of Cooked Rice isolated on transparent background for free.jpeg' %}" class="card-img-top">
+
+<div class="card-body text-center">
+
+<h5>Organic Rice</h5>
+
+<p class="text-muted">Premium organic rice</p>
+
+<p class="price">KSh 250</p>
+
+<button class="btn buy-btn text-white">Add to Cart</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-md-3">
+
+<div class="card product-card">
+
+<img src="{% static 'images/A colorful assortment of fruits and vegetables, including apples, oranges.jpeg' %}">
+
+<div class="card-body text-center">
+
+<h5>Fresh Fruits</h5>
+
+<p class="text-muted">Seasonal fruits</p>
+
+<p class="price">KSh 180</p>
+
+<button class="btn buy-btn text-white">Add to Cart</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-md-3">
+
+<div class="card product-card">
+
+<img src="{% static 'images/Fresh organic vegetables including bell peppers, carrots, lettuce, broccoli, cauliflower, and onions, isolated on a white background_.jpeg' %}">
+
+<div class="card-body text-center">
+
+<h5>Organic Vegetables</h5>
+
+<p class="text-muted">Farm fresh vegetables</p>
+
+<p class="price">KSh 150</p>
+
+<button class="btn buy-btn text-white">Add to Cart</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-md-3">
+
+<div class="card product-card">
+
+<img src="{% static 'images/milk.jpeg' %}">
+
+<div class="card-body text-center">
+
+<h5>Fresh Milk</h5>
+
+<p class="text-muted">Natural dairy</p>
+
+<p class="price">KSh 120</p>
+
+<button class="btn buy-btn text-white">Add to Cart</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- FOOTER -->
+
+<footer>
+
+<div class="container">
+
+<div class="row">
+
+<div class="col-md-4">
+<h5>EcoMart</h5>
+<p>Fresh groceries delivered to your home with care and sustainability.</p>
+</div>
+
+<div class="col-md-4 footer-links">
+<h5>Quick Links</h5>
+<a href="#">Products</a>
+<a href="#">About</a>
+<a href="#">Contact</a>
+</div>
+
+<div class="col-md-4">
+<h5>Contact</h5>
+<p>Email: support@ecomart.com</p>
+<p>Phone: +254 700 000000</p>
+</div>
+
+</div>
+
+</div>
+
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
