@@ -32,10 +32,14 @@
 
   <!-- Main Content -->
   <div class="col-md-9">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-      <h1 class="bh-page-title h3 mb-0">Seller Dashboard</h1>
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Seller overview</div>
+        <h1 class="bh-page-title h3 mb-0">Seller Dashboard</h1>
+        <p>Track your catalog at a glance and keep your storefront tidy.</p>
+      </div>
       {% if profile and profile.profile_picture %}
-        <img src="{{ profile.profile_picture.url }}" alt="Profile picture" style="width: 48px; height: 48px; object-fit: cover; border-radius: 999px;" />
+        <img src="{{ profile.profile_picture.url }}" alt="Profile picture" class="bh-entity-avatar" style="width: 56px; height: 56px; object-fit: cover; border-radius: 999px;" />
       {% endif %}
     </div>
 

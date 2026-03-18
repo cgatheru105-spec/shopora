@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from .constants import FOUNDER_USERNAMES_BY_KEY
 from .models import Item, Profile
 
 
@@ -39,6 +40,7 @@ class RegisterForm(forms.Form):
         username = (self.cleaned_data.get("username") or "").strip()
         if not username:
             raise ValidationError("Please enter a username.")
+        username = FOUNDER_USERNAMES_BY_KEY.get(username.lower(), username)
         if User.objects.filter(username__iexact=username).exists():
             raise ValidationError("This username is already taken.")
         return username

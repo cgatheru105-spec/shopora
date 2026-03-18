@@ -8,48 +8,127 @@
 {% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-    <h1 class="bh-page-title h3 mb-0">Search profiles</h1>
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Community</div>
+      <h1 class="bh-page-title h3 mb-0">Search profiles</h1>
+      <p>Find sellers and buyers by username, then jump into their public profile.</p>
+    </div>
   </div>
 
-  <div class="bh-surface p-3 p-md-4 mb-3">
-    <form method="get" class="input-group">
-      <input name="q" value="{{ q }}" class="form-control" placeholder="Search by username..." aria-label="Search profiles">
-      <button class="btn btn-success" type="submit">Search</button>
+  <div class="bh-surface bh-search-panel p-3 p-md-4 mb-4">
+    <form method="get" class="row g-3">
+      <div class="col-md-6">
+        <label for="id_q" class="form-label">Search by username</label>
+        <input name="q" value="{{ q }}" id="id_q" class="form-control" placeholder="Enter username..." aria-label="Search profiles">
+      </div>
+      <div class="col-md-3">
+        <label for="id_account_type" class="form-label">Account Type</label>
+        <select name="account_type" id="id_account_type" class="form-select">
+          <option value="">All Types</option>
+          <option value="seller" {% if account_type_filter == "seller" %}selected{% endif %}>Sellers</option>
+          <option value="buyer" {% if account_type_filter == "buyer" %}selected{% endif %}>Buyers</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="id_sort_by" class="form-label">Sort By</label>
+        <select name="sort_by" id="id_sort_by" class="form-select">
+          <option value="username" {% if sort_by == "username" %}selected{% endif %}>Username A-Z</option>
+          <option value="date_joined" {% if sort_by == "date_joined" %}selected{% endif %}>Newest First</option>
+          <option value="items_count" {% if sort_by == "items_count" %}selected{% endif %}>Most Active</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success me-2" type="submit">Search</button>
+        {% if q or account_type_filter %}
+          <a href="{% url 'profiles_search' %}" class="btn btn-outline-secondary">Clear Filters</a>
+        {% endif %}
+      </div>
     </form>
   </div>
 
-  {% if not q %}
-    <div class="alert alert-secondary bh-surface">
-      Search for a username to find people and view their public profile.
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Founders</div>
+      <h2 class="bh-section-title h5 mb-0">Crowned accounts</h2>
+      <p>The founder names always have reserved seats here, and live accounts get the royal treatment.</p>
+    </div>
+    <a class="btn btn-outline-warning btn-sm" href="{% url 'index' %}#founders">View throne room</a>
+  </div>
+
+  <div class="bh-founder-grid mb-4">
+    {% for founder in founders %}
+      <div class="bh-founder-card {% if not founder.is_live %}is-empty{% endif %}">
+        <div class="bh-founder-crown">
+          <i class="bi bi-stars"></i>
+        </div>
+        <div class="bh-founder-copy">
+          <div class="bh-founder-name">{{ founder.display_name }}</div>
+          <div class="bh-founder-role">{{ founder.status_label }}</div>
+          <div class="bh-founder-seat">{{ founder.description }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if not q and not account_type_filter %}
+    <div class="alert alert-secondary bh-surface bh-empty-state">
+      <div class="mb-3">
+        <strong>Discover Community Members</strong>
+      </div>
+      <p class="mb-3">Search for users by username, or browse by account type to find sellers and buyers in our community.</p>
+      <div class="d-flex flex-wrap gap-2 justify-content-center">
+        <a href="?account_type=seller&sort_by=items_count" class="btn btn-outline-success btn-sm">Top Sellers</a>
+        <a href="?account_type=buyer" class="btn btn-outline-primary btn-sm">Find Buyers</a>
+        <a href="?sort_by=date_joined" class="btn btn-outline-info btn-sm">New Members</a>
+      </div>
     </div>
   {% endif %}
 
   {% if q and not results %}
-    <div class="alert alert-info bh-surface">No profiles found for "{{ q }}".</div>
+    <div class="alert alert-info bh-surface bh-empty-state">No profiles found for "{{ q }}".</div>
   {% endif %}
 
   {% if results %}
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h2 class="bh-section-title h5 mb-0">{{ results|length }} profile{{ results|pluralize }} found</h2>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="?account_type=seller&sort_by=items_count" class="btn btn-outline-success btn-sm">Top Sellers</a>
+        <a href="?account_type=buyer&sort_by=date_joined" class="btn btn-outline-primary btn-sm">Recent Buyers</a>
+        <a href="?sort_by=username" class="btn btn-outline-secondary btn-sm">A-Z</a>
+      </div>
+    </div>
     <div class="row g-3">
       {% for row in results %}
         <div class="col-12 col-md-6 col-lg-4">
-          <div class="bh-surface p-3 d-flex gap-3 align-items-center">
+          <div class="bh-surface p-3 d-flex gap-3 align-items-center h-100">
             {% if row.profile and row.profile.profile_picture %}
-              <img src="{{ row.profile.profile_picture.url }}" width="48" height="48" class="rounded-circle" alt="Profile picture" style="object-fit: cover;">
+              <img src="{{ row.profile.profile_picture.url }}" width="56" height="56" class="bh-entity-avatar" alt="Profile picture" style="object-fit: cover;">
             {% else %}
-              <img src="{% static 'images/logo.png' %}" width="48" height="48" class="rounded-circle" alt="Profile picture">
+              <img src="{% static 'images/logo.png' %}" width="56" height="56" class="bh-entity-avatar" alt="Profile picture">
             {% endif %}
 
             <div class="flex-grow-1">
               <div class="fw-semibold">{{ row.user.username }}</div>
               {% if row.profile %}
-                <div class="text-muted small text-capitalize">{{ row.profile.account_type }}</div>
+                <div class="bh-card-meta mt-2">
+                  <span class="bh-mini-badge">{{ row.profile_type }}</span>
+                  {% if row.item_count > 0 %}
+                    <span class="bh-mini-badge">{{ row.item_count }} item{{ row.item_count|pluralize }}</span>
+                  {% endif %}
+                  {% if row.is_founder %}
+                    <span class="bh-mini-badge">Founder</span>
+                  {% endif %}
+                </div>
+                <div class="text-muted small mt-1">
+                  Joined {{ row.user.date_joined|date:"M Y" }}
+                </div>
               {% else %}
                 <div class="text-muted small">Profile not set up</div>
               {% endif %}
             </div>
 
-            <a class="btn btn-outline-success btn-sm" href="{% url 'profile_public' row.user.username %}">View</a>
+            <a class="btn btn-outline-success btn-sm" href="{{ row.profile_url }}">View</a>
           </div>
         </div>
       {% endfor %}

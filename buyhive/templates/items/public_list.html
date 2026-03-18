@@ -8,8 +8,12 @@
 {% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-    <h1 class="bh-page-title h3 mb-0">Browse Items</h1>
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Marketplace</div>
+      <h1 class="bh-page-title h3 mb-0">Browse Items</h1>
+      <p>Use filters to narrow down what you need, then jump to the seller profile for more context.</p>
+    </div>
     {% if user.is_authenticated %}
       <a class="btn btn-outline-secondary btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
     {% else %}
@@ -17,34 +21,34 @@
     {% endif %}
   </div>
 
-	  <div class="bh-surface p-3 p-md-4 mb-3">
-	    <form method="get" class="row g-2 align-items-end">
-	      <div class="col-12 col-md-4">
-	        <label for="{{ filter_form.search.id_for_label }}" class="form-label small text-muted">Search</label>
-	        {{ filter_form.search }}
-	      </div>
-	      <div class="col-6 col-md-2">
-	        <label for="{{ filter_form.min_price.id_for_label }}" class="form-label small text-muted">Min</label>
-	        {{ filter_form.min_price }}
-	      </div>
-	      <div class="col-6 col-md-2">
-	        <label for="{{ filter_form.max_price.id_for_label }}" class="form-label small text-muted">Max</label>
-	        {{ filter_form.max_price }}
-	      </div>
-	      <div class="col-12 col-md-3">
-	        <label for="{{ filter_form.sort_by.id_for_label }}" class="form-label small text-muted">Sort</label>
-	        {{ filter_form.sort_by }}
-	      </div>
-	      <div class="col-12 col-md-1 d-grid">
-	        <button type="submit" class="btn btn-success">Go</button>
-	      </div>
-	      {% if request.GET %}
-	        <div class="col-12">
-	          <a href="{% url 'items_public' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
-	        </div>
-	      {% endif %}
-	    </form>
-	  </div>
+  <div class="bh-surface p-3 p-md-4 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-12 col-md-4">
+        <label for="{{ filter_form.search.id_for_label }}" class="form-label small text-muted">Search</label>
+        {{ filter_form.search }}
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="{{ filter_form.min_price.id_for_label }}" class="form-label small text-muted">Min</label>
+        {{ filter_form.min_price }}
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="{{ filter_form.max_price.id_for_label }}" class="form-label small text-muted">Max</label>
+        {{ filter_form.max_price }}
+      </div>
+      <div class="col-12 col-md-3">
+        <label for="{{ filter_form.sort_by.id_for_label }}" class="form-label small text-muted">Sort</label>
+        {{ filter_form.sort_by }}
+      </div>
+      <div class="col-12 col-md-1 d-grid">
+        <button type="submit" class="btn btn-success">Go</button>
+      </div>
+      {% if request.GET %}
+        <div class="col-12">
+          <a href="{% url 'items_public' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
+        </div>
+      {% endif %}
+    </form>
+  </div>
 
   {% if items %}
     <div class="row g-3">
@@ -62,17 +66,23 @@
             <div class="card-body">
               <div class="fw-semibold text-success">{{ item.name }}</div>
               <div class="text-muted small">{{ item.description|default:"No description available" }}</div>
+              <div class="bh-card-meta mt-3">
+                <span class="bh-mini-badge">Available now</span>
+              </div>
             </div>
 
-            <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
-              <span class="bh-price">${{ item.price }}</span>
-              <small class="text-muted">by {{ item.owner.username }}</small>
+            <div class="card-footer bg-transparent border-0 bh-card-footer">
+              <div>
+                <span class="bh-price">${{ item.price }}</span>
+                <div class="small text-muted">by {{ item.owner.username }}</div>
+              </div>
+              <a class="btn btn-outline-success btn-sm" href="{% url 'profile_public' item.owner.username %}">Seller</a>
             </div>
           </div>
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-info bh-surface">No items available yet.</div>
+    <div class="alert alert-info bh-surface bh-empty-state">No items available yet.</div>
   {% endif %}
 {% endblock %}

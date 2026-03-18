@@ -5,6 +5,9 @@
     reduceMotion: "bh_reduce_motion", // "1" | "0"
   };
 
+  let revealObserver = null;
+  let royalClicks = [];
+
   function getThemePreference() {
     const value = localStorage.getItem(STORAGE_KEYS.theme);
     if (value === "light" || value === "dark" || value === "system") return value;
@@ -34,6 +37,17 @@
 
   function applyReduceMotion(enabled) {
     document.body.classList.toggle("bh-reduce-motion", enabled);
+    if (enabled) {
+      if (revealObserver) {
+        revealObserver.disconnect();
+        revealObserver = null;
+      }
+      document.querySelectorAll(".bh-reveal").forEach((el) => {
+        el.classList.add("is-visible");
+      });
+    } else {
+      initReveals();
+    }
   }
 
   function readBool(key) {
@@ -119,11 +133,106 @@
     }
   }
 
+  function initBackToTop() {
+    const button = document.querySelector("[data-bh-back-to-top]");
+    if (!button) return;
+
+    const syncVisibility = () => {
+      button.classList.toggle("is-visible", window.scrollY > 380);
+    };
+
+    syncVisibility();
+    window.addEventListener("scroll", syncVisibility, { passive: true });
+    button.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: document.body.classList.contains("bh-reduce-motion") ? "auto" : "smooth" });
+    });
+  }
+
+  function showRoyalToast(message) {
+    const existing = document.querySelector(".bh-royal-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.className = "bh-royal-toast";
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    window.setTimeout(() => {
+      toast.remove();
+    }, 2600);
+  }
+
+  function initEasterEggs() {
+    const mark = document.querySelector(".bh-brand-mark");
+    if (!mark) return;
+
+    mark.addEventListener("click", () => {
+      const now = Date.now();
+      royalClicks = royalClicks.filter((stamp) => now - stamp < 1800);
+      royalClicks.push(now);
+
+      if (royalClicks.length >= 5) {
+        royalClicks = [];
+        const enabled = document.body.classList.toggle("bh-royal-mode");
+        showRoyalToast(
+          enabled
+            ? "Royal mode unlocked. Long live the founders."
+            : "Royal mode dismissed. Back to business."
+        );
+      }
+    });
+  }
+
+  function initReveals() {
+    if (revealObserver) {
+      revealObserver.disconnect();
+      revealObserver = null;
+    }
+
+    if (document.body.classList.contains("bh-reduce-motion")) {
+      return;
+    }
+
+    const elements = Array.from(
+      document.querySelectorAll(
+        ".bh-hero, .bh-surface, .bh-product-card, .bh-category-card, .alert"
+      )
+    );
+
+    elements.forEach((el, index) => {
+      if (!el.classList.contains("bh-reveal")) {
+        el.classList.add("bh-reveal");
+      }
+      const delay = Math.min(index * 35, 260);
+      el.style.setProperty("--bh-reveal-delay", `${delay}ms`);
+    });
+
+    if (!("IntersectionObserver" in window)) {
+      elements.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add("is-visible");
+          revealObserver.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.12 }
+    );
+
+    elements.forEach((el) => revealObserver.observe(el));
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     applyAll();
     initSystemThemeListener();
     initNavbarTheme();
     initProfileSettings();
+    initBackToTop();
+    initEasterEggs();
+    initReveals();
   });
 })();
-

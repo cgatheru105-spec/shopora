@@ -7,8 +7,79 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from .constants import FOUNDER_USERNAMES, FOUNDER_USERNAMES_BY_KEY
 from .forms import ItemFilterForm, ItemForm, LoginForm, ProfilePictureForm, RegisterForm
 from .models import Item, ItemImage, Profile
+
+
+def _founder_filter():
+    founder_query = models.Q()
+    for username in FOUNDER_USERNAMES:
+        founder_query |= models.Q(username__iexact=username)
+    return founder_query
+
+
+def _first_item_image_url(item):
+    prefetched_images = getattr(item, "_prefetched_objects_cache", {}).get("images")
+    if prefetched_images is not None:
+        if prefetched_images:
+            return prefetched_images[0].image.url
+        return ""
+
+    first_image = item.images.order_by("created_at").first()
+    return first_image.image.url if first_image else ""
+
+
+def _serialize_item_card(item, include_owner=False):
+    card = {
+        "name": item.name,
+        "description": item.description or "No description available",
+        "price": item.price,
+        "created_at": item.created_at,
+        "image_url": _first_item_image_url(item),
+    }
+    if include_owner:
+        card["owner_username"] = item.owner.username
+        card["owner_profile_url"] = reverse("profile_public", args=[item.owner.username])
+    return card
+
+
+def _get_founders():
+    User = get_user_model()
+    founder_users = list(
+        User.objects.annotate(item_count=models.Count("items", distinct=True)).filter(
+            _founder_filter()
+        )
+    )
+    profiles = Profile.objects.select_related("user").filter(user__in=founder_users)
+    profile_by_user_id = {profile.user_id: profile for profile in profiles}
+    founder_by_key = {user.username.lower(): user for user in founder_users}
+
+    founders = []
+    for username in FOUNDER_USERNAMES:
+        user = founder_by_key.get(username.lower())
+        profile = profile_by_user_id.get(user.id) if user else None
+        item_count = getattr(user, "item_count", 0) if user else 0
+        founders.append(
+            {
+                "seat_name": username,
+                "display_name": user.username if user else username,
+                "profile_type": profile.get_account_type_display() if profile else "",
+                "profile_url": reverse("profile_public", args=[user.username]) if user else "",
+                "item_count": item_count,
+                "is_live": bool(user),
+                "status_label": "Founding Member" if user else "Throne Reserved",
+                "description": (
+                    f"{profile.get_account_type_display()} account with {item_count} listing{'s' if item_count != 1 else ''}."
+                    if user and profile
+                    else "Profile coming online soon."
+                    if user
+                    else "Waiting for the rightful owner to claim this seat."
+                ),
+            }
+        )
+    return founders
+
 
 # Create your views here.
 def index(request):
@@ -22,14 +93,24 @@ def index(request):
         .values_list('owner', flat=True)
     )
     
-    popular_items = (
+    popular_items = list(
         Item.objects.select_related('owner')
         .prefetch_related('images')
         .filter(owner__in=popular_sellers)
         .order_by('-created_at')[:8]  # Get up to 8 items from popular sellers
     )
+    popular_cards = [
+        _serialize_item_card(item, include_owner=True) for item in popular_items
+    ]
     
-    return render(request, 'index.html', {'popular_items': popular_items})
+    return render(
+        request,
+        "index.html",
+        {
+            "popular_cards": popular_cards,
+            "founders": _get_founders(),
+        },
+    )
 
 def Buy_products(request):
     q = (request.GET.get("q") or "").strip()
@@ -116,12 +197,28 @@ def dashboard(request):
 @login_required
 def profile_edit(request):
     profile = _get_or_create_profile(request.user)
+    user_items = Item.objects.filter(owner=request.user)
+    profile_stats = user_items.aggregate(
+        total_items=models.Count("id"),
+        avg_price=models.Avg("price"),
+        latest_listing=models.Max("created_at"),
+    )
     form = ProfilePictureForm(request.POST or None, request.FILES or None, instance=profile)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Profile updated.")
         return redirect("dashboard")
-    return render(request, "profile_edit.html", {"form": form, "profile": profile})
+    return render(
+        request,
+        "profile_edit.html",
+        {
+            "form": form,
+            "profile": profile,
+            "profile_stats": profile_stats,
+            "is_founder": request.user.username.lower() in FOUNDER_USERNAMES_BY_KEY,
+            "member_since": profile.created_at or request.user.date_joined,
+        },
+    )
 
 
 def items_public_list(request):
@@ -162,32 +259,88 @@ def items_public_list(request):
 
 def profiles_search(request):
     q = (request.GET.get("q") or "").strip()
+    account_type_filter = request.GET.get("account_type", "")
+    sort_by = request.GET.get("sort_by", "username")
+    
     User = get_user_model()
     results = []
+    users = User.objects.annotate(item_count=models.Count("items", distinct=True)).all()
+
     if q:
-        users = User.objects.filter(username__icontains=q).order_by("username")
-        if request.user.is_authenticated:
-            users = users.exclude(pk=request.user.pk)
-        users = users[:50]
+        users = users.filter(username__icontains=q)
+
+    if account_type_filter:
+        users = users.filter(profile__account_type=account_type_filter)
+
+    if request.user.is_authenticated:
+        users = users.exclude(pk=request.user.pk)
+
+    if sort_by == "username":
+        users = users.order_by("username")
+    elif sort_by == "date_joined":
+        users = users.order_by("-date_joined")
+    elif sort_by == "items_count":
+        users = users.order_by("-item_count", "username")
+
+    users = list(users[:100])
+
+    if users:
         profiles = Profile.objects.select_related("user").filter(user__in=users)
         profile_by_user_id = {p.user_id: p for p in profiles}
-        results = [{"user": user, "profile": profile_by_user_id.get(user.id)} for user in users]
-    return render(request, "profiles/search.html", {"q": q, "results": results})
+
+        results = []
+        for user in users:
+            profile = profile_by_user_id.get(user.id)
+            results.append({
+                "user": user,
+                "profile": profile,
+                "item_count": user.item_count,
+                "is_founder": user.username.lower() in FOUNDER_USERNAMES_BY_KEY,
+                "profile_type": profile.get_account_type_display() if profile else "",
+                "profile_url": reverse("profile_public", args=[user.username]),
+            })
+    
+    return render(request, "profiles/search.html", {
+        "q": q, 
+        "account_type_filter": account_type_filter,
+        "sort_by": sort_by,
+        "results": results,
+        "founders": _get_founders(),
+    })
 
 
 def profile_public(request, username: str):
     User = get_user_model()
-    user_obj = get_object_or_404(User, username=username)
+    user_obj = get_object_or_404(User, username__iexact=username)
     profile = Profile.objects.filter(user=user_obj).first()
-    items = (
-        Item.objects.filter(owner=user_obj)
+    user_items = Item.objects.filter(owner=user_obj)
+    profile_stats = user_items.aggregate(
+        total_items=models.Count("id"),
+        avg_price=models.Avg("price"),
+        min_price=models.Min("price"),
+        max_price=models.Max("price"),
+        latest_listing=models.Max("created_at"),
+    )
+    items = list(
+        user_items
         .prefetch_related("images")
         .order_by("-created_at")[:8]
     )
+    item_cards = [_serialize_item_card(item) for item in items]
+    featured_item = item_cards[0] if item_cards else None
     return render(
         request,
         "profiles/public.html",
-        {"profile_user": user_obj, "profile": profile, "items": items},
+        {
+            "profile_user": user_obj,
+            "profile": profile,
+            "item_cards": item_cards,
+            "featured_item": featured_item,
+            "profile_stats": profile_stats,
+            "is_founder": user_obj.username.lower() in FOUNDER_USERNAMES_BY_KEY,
+            "profile_type": profile.get_account_type_display() if profile else "User",
+            "member_since": profile.created_at if profile else user_obj.date_joined,
+        },
     )
 
 

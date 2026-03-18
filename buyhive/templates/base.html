@@ -20,15 +20,23 @@
       } catch (e) {}
     })();
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="bh-body">
+  <a class="bh-skip-link" href="#bh-main">Skip to content</a>
   {% block navbar %}
-  <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm bh-navbar">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm bh-navbar" aria-label="Primary">
     <div class="container">
-      <a class="navbar-brand fw-semibold" href="{% url 'index' %}">EcoMart Shopora</a>
+      <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{% url 'index' %}">
+        <span class="bh-brand-mark"></span>
+        <span>EcoMart Shopora</span>
+      </a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav" aria-controls="topnav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -38,18 +46,21 @@
         {% with current=request.resolver_match.url_name %}
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
           <li class="nav-item">
-            <a class="nav-link {% if current == 'items_public' %}active{% endif %}" href="{% url 'items_public' %}">Browse</a>
+            <a class="nav-link {% if current == 'items_public' %}active{% endif %}" {% if current == 'items_public' %}aria-current="page"{% endif %} href="{% url 'items_public' %}">Browse</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if current == 'profiles_search' or current == 'profile_public' %}active{% endif %}" href="{% url 'profiles_search' %}">Profiles</a>
+            <a class="nav-link" href="{% url 'index' %}#founders">Founders</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if current == 'profiles_search' or current == 'profile_public' %}active{% endif %}" {% if current == 'profiles_search' or current == 'profile_public' %}aria-current="page"{% endif %} href="{% url 'profiles_search' %}">Profiles</a>
           </li>
 
           {% if user.is_authenticated %}
             <li class="nav-item">
-              <a class="nav-link {% if current == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
+              <a class="nav-link {% if current == 'dashboard' %}active{% endif %}" {% if current == 'dashboard' %}aria-current="page"{% endif %} href="{% url 'dashboard' %}">Dashboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if current == 'profile_edit' %}active{% endif %}" href="{% url 'profile_edit' %}">Profile</a>
+              <a class="nav-link {% if current == 'profile_edit' %}active{% endif %}" {% if current == 'profile_edit' %}aria-current="page"{% endif %} href="{% url 'profile_edit' %}">Profile</a>
             </li>
             <li class="nav-item">
               <a class="btn btn-sm btn-outline-light" href="{% url 'logout' %}">Logout</a>
@@ -80,7 +91,7 @@
   </nav>
   {% endblock %}
 
-  <main class="bh-main">
+  <main class="bh-main" id="bh-main">
     {% block main %}
       <div class="container bh-container">
         {% if messages %}
@@ -99,11 +110,31 @@
 
   <footer class="bh-footer">
     <div class="container">
-      <div class="small">
-        © 2026 EcoMart Shopora. All rights reserved.
+      <div class="bh-footer-grid">
+        <div>
+          <div class="fw-semibold text-dark-emphasis mb-2">EcoMart Shopora</div>
+          <div class="small">Clean shopping, clear profiles, and a marketplace that feels friendly to use.</div>
+        </div>
+        <nav class="bh-footer-links" aria-label="Footer">
+          <a href="{% url 'items_public' %}">Browse Items</a>
+          <a href="{% url 'profiles_search' %}">Search Profiles</a>
+          <a href="{% url 'index' %}#founders">Founders</a>
+          {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+          {% else %}
+            <a href="{% url 'register' %}">Create Account</a>
+          {% endif %}
+        </nav>
+        <div class="small bh-footer-note">
+          Psst. The little jewel in the logo likes rapid taps.
+        </div>
       </div>
     </div>
   </footer>
+
+  <button type="button" class="btn btn-success bh-back-to-top" data-bh-back-to-top aria-label="Back to top">
+    <i class="bi bi-arrow-up"></i>
+  </button>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/ui.js' %}"></script>

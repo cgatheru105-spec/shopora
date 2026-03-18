@@ -10,20 +10,31 @@
 {% block content %}
   <section class="bh-hero mb-4" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
     <div class="bh-hero-inner">
+      <div class="bh-kicker justify-content-center">Seasonal produce and pantry picks</div>
       <h1 class="display-6 mb-2">Fresh organic groceries</h1>
       <p class="lead mb-0">Healthy food delivered straight to your home</p>
 
-	      <div class="bh-search">
-	        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg">
-	          <input name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search products..." aria-label="Search products">
-	          <button class="btn btn-success" type="submit">Search</button>
-	        </form>
-	      </div>
+      <div class="bh-search">
+        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg">
+          <input name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search products..." aria-label="Search products">
+          <button class="btn btn-success" type="submit">Search</button>
+        </form>
+      </div>
+
+      <div class="bh-chip-row justify-content-center">
+        <span class="bh-chip"><span class="bh-chip-dot"></span>Organic-first</span>
+        <span class="bh-chip"><span class="bh-chip-dot"></span>Clean catalog</span>
+        <span class="bh-chip"><span class="bh-chip-dot"></span>Easy browsing</span>
+      </div>
     </div>
   </section>
 
-  <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-    <h2 class="bh-section-title h4 mb-0">Shop products</h2>
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Catalog</div>
+      <h2 class="bh-section-title h4 mb-0">Shop products</h2>
+      <p>Browse the latest additions and quickly search for the items you already know you want.</p>
+    </div>
     <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Browse marketplace</a>
   </div>
 
@@ -47,11 +58,14 @@
             </div>
 
             <div class="card-body">
-	              <div class="fw-semibold">{{ item.name }}</div>
-	              <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
-	              <div class="small text-warning" aria-label="Rating: 5 out of 5">*****</div>
-	              <div class="bh-price mt-2">${{ item.price }}</div>
-	            </div>
+              <div class="fw-semibold">{{ item.name }}</div>
+              <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
+              <div class="bh-card-meta">
+                <span class="bh-mini-badge">Organic</span>
+                <span class="small text-warning" aria-label="Rating: 5 out of 5">*****</span>
+              </div>
+              <div class="bh-price mt-2">${{ item.price }}</div>
+            </div>
 
             <div class="card-footer bg-transparent border-0">
               <div class="d-grid gap-2">

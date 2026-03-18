@@ -8,13 +8,14 @@
 {% endblock %}
 
 {% block content %}
-  <section class="bh-hero mb-5" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
+  <section class="bh-hero mb-5" aria-labelledby="home-hero-title" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
     <div class="bh-hero-inner">
-      <h1 class="display-5 mb-2">Fresh groceries, every day</h1>
+      <div class="bh-kicker justify-content-center">Fresh finds from local sellers</div>
+      <h1 id="home-hero-title" class="display-5 mb-2">Fresh groceries, every day</h1>
       <p class="lead mb-0">Healthy / Sustainable / Affordable</p>
 
       <div class="bh-search">
-        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg">
+        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg" role="search" aria-label="Search groceries">
           <input name="q" type="text" class="form-control" placeholder="Search groceries..." aria-label="Search groceries">
           <button type="submit" class="btn btn-success">Search</button>
         </form>
@@ -23,78 +24,183 @@
       <div class="mt-4">
         <a href="{% url 'book' %}" class="btn btn-light btn-lg px-4">Shop products</a>
       </div>
+
+      <div class="bh-chip-row justify-content-center">
+        <span class="bh-chip"><span class="bh-chip-dot"></span>Same-day friendly</span>
+        <span class="bh-chip"><span class="bh-chip-dot"></span>Trusted community sellers</span>
+        <span class="bh-chip"><span class="bh-chip-dot"></span>Simple browsing</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="bh-stat-grid">
+      <div class="bh-stat-card">
+        <div class="bh-stat-label">Fresh picks</div>
+        <div class="bh-stat-value">{{ popular_cards|length }}</div>
+      </div>
+      <div class="bh-stat-card">
+        <div class="bh-stat-label">Shopping style</div>
+        <div class="bh-stat-value">Simple</div>
+      </div>
+      <div class="bh-stat-card">
+        <div class="bh-stat-label">Marketplace</div>
+        <div class="bh-stat-value">Local</div>
+      </div>
     </div>
   </section>
 
   <section class="mb-5">
-    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-      <h2 class="bh-section-title h4 mb-0">Shop by category</h2>
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Start here</div>
+        <h2 class="bh-section-title h4 mb-0">Shop by category</h2>
+      </div>
       <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">View all</a>
     </div>
 
     <div class="row g-3">
       <div class="col-6 col-md-3">
-        <div class="bh-category-card">
+        <a href="{% url 'items_public' %}?search=fruits" class="bh-category-card text-decoration-none">
           <img alt="Fruits" src="https://img.icons8.com/color/96/apple.png">
           <div class="fw-semibold">Fruits</div>
-        </div>
+        </a>
       </div>
       <div class="col-6 col-md-3">
-        <div class="bh-category-card">
+        <a href="{% url 'items_public' %}?search=vegetables" class="bh-category-card text-decoration-none">
           <img alt="Vegetables" src="https://img.icons8.com/color/96/broccoli.png">
           <div class="fw-semibold">Vegetables</div>
-        </div>
+        </a>
       </div>
       <div class="col-6 col-md-3">
-        <div class="bh-category-card">
+        <a href="{% url 'items_public' %}?search=dairy" class="bh-category-card text-decoration-none">
           <img alt="Dairy" src="https://img.icons8.com/color/96/milk-bottle.png">
           <div class="fw-semibold">Dairy</div>
-        </div>
+        </a>
       </div>
       <div class="col-6 col-md-3">
-        <div class="bh-category-card">
+        <a href="{% url 'items_public' %}?search=grains" class="bh-category-card text-decoration-none">
           <img alt="Grains" src="https://img.icons8.com/color/96/rice-bowl.png">
           <div class="fw-semibold">Grains</div>
-        </div>
+        </a>
       </div>
     </div>
   </section>
 
   <section>
-    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-      <h2 class="bh-section-title h4 mb-0">Popular products</h2>
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Community favorites</div>
+        <h2 class="bh-section-title h4 mb-0">Popular products</h2>
+        <p>Fresh additions from active sellers in the marketplace.</p>
+      </div>
       <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">View all</a>
     </div>
 
-    {% if popular_items %}
+    {% if popular_cards %}
       <div class="row g-3">
-        {% for item in popular_items %}
+        {% for item in popular_cards %}
           <div class="col-12 col-sm-6 col-lg-3">
-            <div class="card bh-product-card h-100">
-              {% with first_image=item.images.first %}
-                {% if first_image %}
-                  <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
-                {% else %}
-                  <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
-                {% endif %}
-              {% endwith %}
+            <article class="card bh-product-card h-100">
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
+              {% else %}
+                <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+              {% endif %}
 
               <div class="card-body">
                 <div class="fw-semibold text-success">{{ item.name }}</div>
-                <div class="text-muted small">{{ item.description|default:"No description available"|truncatechars:50 }}</div>
+                <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
+                <div class="bh-card-meta mt-3">
+                  <span class="bh-mini-badge">Popular</span>
+                  <span class="bh-mini-badge">Fresh pick</span>
+                </div>
                 <div class="bh-price mt-2">${{ item.price }}</div>
               </div>
 
-	              <div class="card-footer bg-transparent border-0 d-flex justify-content-between align-items-center">
-	                <small class="text-muted">by {{ item.owner.username }}</small>
-	                <a href="{% url 'items_public' %}" class="btn btn-outline-success btn-sm">View</a>
-	              </div>
-            </div>
+              <div class="card-footer bg-transparent border-0 bh-card-footer">
+                <small class="text-muted">by {{ item.owner_username }}</small>
+                <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
+              </div>
+            </article>
           </div>
         {% endfor %}
       </div>
     {% else %}
       <div class="alert alert-info bh-surface">No popular products available yet. Check back soon!</div>
     {% endif %}
+  </section>
+
+  <section id="founders" class="mt-5 mb-5">
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Founding royalty</div>
+        <h2 class="bh-section-title h4 mb-0">The throne room</h2>
+        <p>These five seats are reserved for the founding names. Once their accounts exist, they show up here like marketplace kings.</p>
+      </div>
+      <a class="btn btn-outline-warning btn-sm" href="{% url 'profiles_search' %}?sort_by=items_count">Meet the community</a>
+    </div>
+
+    <div class="bh-founder-grid">
+      {% for founder in founders %}
+        <div class="bh-founder-card {% if not founder.is_live %}is-empty{% endif %}">
+          <div class="bh-founder-crown">
+            <i class="bi bi-stars"></i>
+          </div>
+          <div class="bh-founder-copy">
+            <div class="bh-founder-name">{{ founder.display_name }}</div>
+            <div class="bh-founder-role">{{ founder.status_label }}</div>
+            <div class="bh-founder-seat">{{ founder.description }}</div>
+          </div>
+
+          <div class="bh-chip-row">
+            {% if founder.is_live %}
+              <span class="bh-chip"><span class="bh-chip-dot"></span>Crowned</span>
+              <a class="bh-chip text-decoration-none" href="{{ founder.profile_url }}">
+                <span class="bh-chip-dot"></span>View profile
+              </a>
+            {% else %}
+              <span class="bh-chip"><span class="bh-chip-dot"></span>Reserved name</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+      <h2 class="bh-section-title h4 mb-0">Join Our Community</h2>
+      <a class="btn btn-outline-primary btn-sm" href="{% url 'profiles_search' %}">Browse All Members</a>
+    </div>
+
+    <div class="bh-surface p-4 text-center">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <i class="bi bi-people-fill text-success" style="font-size: 3rem;"></i>
+          </div>
+          <h5 class="mb-2">Connect with Sellers</h5>
+          <p class="text-muted mb-3">Find trusted local sellers and browse their profiles</p>
+          <a href="{% url 'profiles_search' %}?account_type=seller" class="btn btn-outline-success">Find Sellers</a>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <i class="bi bi-search text-primary" style="font-size: 3rem;"></i>
+          </div>
+          <h5 class="mb-2">Easy Discovery</h5>
+          <p class="text-muted mb-3">Search by username or filter by account type</p>
+          <a href="{% url 'profiles_search' %}" class="btn btn-outline-primary">Search Profiles</a>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <i class="bi bi-star-fill text-warning" style="font-size: 3rem;"></i>
+          </div>
+          <h5 class="mb-2">Active Community</h5>
+          <p class="text-muted mb-3">See who's most active and join the conversation</p>
+          <a href="{% url 'profiles_search' %}?sort_by=items_count" class="btn btn-outline-warning">Top Members</a>
+        </div>
+      </div>
+    </div>
   </section>
 {% endblock %}

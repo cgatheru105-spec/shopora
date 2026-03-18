@@ -2,9 +2,12 @@
 {% block navbar %}
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm bh-navbar">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">EcoMart Shopora</a>
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
+      <span class="bh-brand-mark"></span>
+      <span>EcoMart Shopora</span>
+    </a>
 
     <div class="ms-auto d-flex gap-2">
       <a class="btn btn-light btn-sm" href="{% url 'seller_item_create' %}">Add Item</a>
@@ -20,7 +23,13 @@
 
 {% block content %}
 
-  <h2 class="mb-4 text-success">My Items</h2>
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Seller workspace</div>
+      <h2 class="bh-page-title h3 mb-0">My Items</h2>
+      <p>Manage your current listings, keep prices updated, and jump into edits quickly.</p>
+    </div>
+  </div>
 
   {% if items %}
     <div class="bh-surface p-3 p-md-4">
@@ -72,7 +81,7 @@
     </div>
 
   {% else %}
-    <div class="alert alert-info shadow-sm">
+    <div class="alert alert-info shadow-sm bh-empty-state">
       No items yet.
     </div>
   {% endif %}
