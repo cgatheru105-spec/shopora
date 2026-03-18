@@ -1,136 +1,195 @@
-{% extends 'base.html' %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Items</title>
 
-{% block title %}Browse Items · EcoMart Shopora{% endblock %}
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-{% block extra_head %}
-  <link rel="stylesheet" href="{% static 'css/public.css' %}">
-{% endblock %}
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-{% block content %}
-  <div class="bh-page-intro">
-    <div>
-      <div class="bh-kicker">Marketplace</div>
-      <h1 class="bh-page-title h3 mb-0">Browse Items</h1>
-      <p>Use filters to narrow down what you need, then jump to the seller profile for more context.</p>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f8f9fa, #e9f5ee);
+    }
+
+    /* Navbar */
+    .navbar {
+      backdrop-filter: blur(10px);
+      background: linear-gradient(90deg, #198754, #157347);
+    }
+
+    .navbar-brand {
+      letter-spacing: 1px;
+      font-size: 1.4rem;
+    }
+
+    /* Page title */
+    h2 {
+      font-weight: 600;
+      color: #198754;
+    }
+
+    /* Card styling */
+    .card {
+      border-radius: 15px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      background: #fff;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.01);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .card img {
+      transition: transform 0.4s ease;
+    }
+
+    .card:hover img {
+      transform: scale(1.05);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+    }
+
+    .card-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      border-top: none;
+      font-size: 0.9rem;
+    }
+
+    /* Price highlight */
+    .price-tag {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #198754;
+    }
+
+    /* Buttons */
+    .btn-light {
+      border-radius: 20px;
+      padding: 6px 15px;
+      font-weight: 500;
+    }
+
+    .btn-light:hover {
+      background-color: #e2e6ea;
+    }
+
+    /* Empty state */
+    .empty-box {
+      border-radius: 12px;
+      padding: 30px;
+      background: white;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+
+  </style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{% url 'index' %}">Shopora</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'index' %}">Home</a>
+        </li>
+
+        {% if user.is_authenticated %}
+
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'dashboard' %}">Dashboard</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="btn btn-light ms-2" href="{% url 'logout' %}">Logout</a>
+        </li>
+
+        {% else %}
+
+        <li class="nav-item">
+          <a class="btn btn-light ms-2" href="{% url 'login' %}">Login</a>
+        </li>
+
+        {% endif %}
+      </ul>
     </div>
-    {% if user.is_authenticated %}
-      <a class="btn btn-outline-secondary btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
-    {% else %}
-      <a class="btn btn-success btn-sm" href="{% url 'login' %}">Login</a>
-    {% endif %}
   </div>
+</nav>
 
-  <div class="bh-surface bh-search-panel p-3 p-md-4 mb-3">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-12 col-md-4">
-        <label for="{{ filter_form.search.id_for_label }}" class="form-label small text-muted">Search</label>
-        {{ filter_form.search }}
-      </div>
-      <div class="col-6 col-md-2">
-        <label for="{{ filter_form.min_price.id_for_label }}" class="form-label small text-muted">Min</label>
-        {{ filter_form.min_price }}
-      </div>
-      <div class="col-6 col-md-2">
-        <label for="{{ filter_form.max_price.id_for_label }}" class="form-label small text-muted">Max</label>
-        {{ filter_form.max_price }}
-      </div>
-      <div class="col-12 col-md-3">
-        <label for="{{ filter_form.sort_by.id_for_label }}" class="form-label small text-muted">Sort</label>
-        {{ filter_form.sort_by }}
-      </div>
-      <div class="col-12 col-md-1 d-grid">
-        <button type="submit" class="btn btn-success">Go</button>
-      </div>
-      {% if request.GET %}
-        <div class="col-12">
-          <a href="{% url 'items_public' %}" class="btn btn-outline-secondary btn-sm">Reset</a>
-        </div>
-      {% endif %}
-    </form>
-  </div>
+<!-- Content -->
+<div class="container py-5">
 
-  <div class="bh-snapshot-grid mb-3">
-    <article class="bh-snapshot-card">
-      <div class="bh-snapshot-label">Matching items</div>
-      <div class="bh-snapshot-value">{{ items_count }}</div>
-      <div class="bh-snapshot-note">Current results for your filters</div>
-    </article>
-    <article class="bh-snapshot-card">
-      <div class="bh-snapshot-label">Active sellers</div>
-      <div class="bh-snapshot-value">{{ marketplace_snapshot.active_sellers|default:0 }}</div>
-      <div class="bh-snapshot-note">Storefronts with live listings</div>
-    </article>
-    <article class="bh-snapshot-card">
-      <div class="bh-snapshot-label">Average price</div>
-      <div class="bh-snapshot-value">
-        {% if marketplace_snapshot.average_price %}${{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
-      </div>
-      <div class="bh-snapshot-note">A quick market read before you compare</div>
-    </article>
-  </div>
-
-  <div class="bh-quick-filter-row" aria-label="Quick marketplace filters">
-    <a class="bh-quick-filter {% if not quick_filter %}is-active{% endif %}" href="{% url 'items_public' %}">
-      <i class="bi bi-grid"></i>All picks
-    </a>
-    <a class="bh-quick-filter {% if quick_filter == 'fresh' %}is-active{% endif %}" href="{% url 'items_public' %}?quick=fresh">
-      <i class="bi bi-stars"></i>Fresh arrivals
-    </a>
-    <a class="bh-quick-filter {% if quick_filter == 'budget' %}is-active{% endif %}" href="{% url 'items_public' %}?quick=budget">
-      <i class="bi bi-cash-coin"></i>Budget friendly
-    </a>
-    <a class="bh-quick-filter {% if quick_filter == 'community' %}is-active{% endif %}" href="{% url 'items_public' %}?quick=community">
-      <i class="bi bi-people"></i>Community sellers
-    </a>
-  </div>
+  <h2 class="mb-4">Explore Items</h2>
 
   {% if items %}
-    <div class="row g-3">
-      {% for item in items %}
-        <div class="col-12 col-md-6 col-lg-4">
-          {% with first_image=item.images.first %}
-            <div class="card bh-product-card h-100">
-              {% if first_image %}
-                <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
-              {% else %}
-                <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
-              {% endif %}
+  <div class="row g-4">
 
-              <div class="card-body">
-                <div class="fw-semibold bh-product-name">{{ item.name }}</div>
-                <div class="text-muted small">{{ item.description|default:"No description available" }}</div>
-                <div class="bh-card-meta mt-3">
-                  <span class="bh-mini-badge">Available now</span>
-                </div>
-              </div>
+    {% for item in items %}
+    <div class="col-12 col-md-6 col-lg-4">
 
-              <div class="card-footer bg-transparent border-0 bh-card-footer">
-                <div>
-                  <span class="bh-price">${{ item.price }}</span>
-                  <div class="small text-muted">by {{ item.owner.username }}</div>
-                </div>
-                <div class="bh-card-actions">
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm"
-                    data-bh-add-to-cart
-                    data-bh-cart-id="item-{{ item.id }}"
-                    data-bh-cart-name="{{ item.name }}"
-                    data-bh-cart-price="{{ item.price }}"
-                    data-bh-cart-seller="{{ item.owner.username }}"
-                    data-bh-cart-url="{% url 'profile_public' item.owner.username %}"
-                    data-bh-cart-image="{% if first_image %}{{ first_image.image.url }}{% else %}{% static 'images/logo.png' %}{% endif %}"
-                  >Cart</button>
-                  <a class="btn btn-outline-success btn-sm" href="{% url 'profile_public' item.owner.username %}">Seller</a>
-                </div>
-              </div>
-            </div>
-          {% endwith %}
+      <div class="card h-100 shadow-sm">
+
+        {% with first_image=item.images.first %}
+          {% if first_image %}
+            <img src="{{ first_image.image.url }}" class="card-img-top" alt="Item image" style="height: 200px; object-fit: cover;">
+          {% else %}
+            <img src="https://via.placeholder.com/400x200?text=No+Image" class="card-img-top">
+          {% endif %}
+        {% endwith %}
+
+        <div class="card-body">
+          <h5 class="card-title text-success fw-bold">{{ item.name }}</h5>
+
+          <p class="card-text text-muted">
+            {{ item.description|truncatewords:20|default:"No description available" }}
+          </p>
         </div>
-      {% endfor %}
+
+        <div class="card-footer d-flex justify-content-between align-items-center bg-white">
+          <span class="price-tag">${{ item.price }}</span>
+          <small class="text-muted">by {{ item.owner.username }}</small>
+        </div>
+
+      </div>
+
     </div>
+    {% endfor %}
+
+  </div>
+
   {% else %}
-    <div class="alert alert-info bh-surface bh-empty-state">No items available yet.</div>
+  <div class="text-center empty-box">
+    <h5 class="text-success">No items yet</h5>
+    <p class="text-muted mb-0">Be the first to add something awesome 🚀</p>
+  </div>
   {% endif %}
-{% endblock %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
