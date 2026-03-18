@@ -24,7 +24,7 @@
   </div>
 
   <section class="bh-profile-shell mb-4" aria-labelledby="profile-summary-title">
-    <div class="bh-surface p-4">
+    <div class="bh-surface bh-profile-banner p-4">
       <div class="bh-entity mb-4">
         {% if profile and profile.profile_picture %}
           <img src="{{ profile.profile_picture.url }}" width="84" height="84" class="bh-entity-avatar" alt="Profile picture" style="object-fit: cover;">
@@ -48,6 +48,17 @@
           <div class="bh-founder-crown">
             <i class="bi bi-stars"></i>
           </div>
+          
+          {% if profile and profile.profile_picture %}
+            <div class="bh-founder-avatar">
+              <img src="{{ profile.profile_picture.url }}" alt="{{ profile_user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          {% else %}
+            <div class="bh-founder-avatar bh-founder-avatar-empty">
+              <i class="bi bi-person" style="font-size: 2rem;"></i>
+            </div>
+          {% endif %}
+          
           <div class="bh-founder-copy">
             <div class="bh-founder-name">{{ profile_user.username }}</div>
             <div class="bh-founder-role">Founding royalty</div>
@@ -92,7 +103,7 @@
   </section>
 
   {% if featured_item %}
-    <section class="bh-surface p-4 mb-4" aria-labelledby="featured-listing-title">
+    <section class="bh-surface bh-featured-panel p-4 mb-4" aria-labelledby="featured-listing-title">
       <div class="bh-page-intro mb-0">
         <div>
           <div class="bh-kicker">Featured listing</div>

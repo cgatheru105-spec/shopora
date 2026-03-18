@@ -41,10 +41,22 @@
           <div class="bh-founder-crown">
             <i class="bi bi-stars"></i>
           </div>
+          
+          {% if profile.profile_picture %}
+            <div class="bh-founder-avatar">
+              <img src="{{ profile.profile_picture.url }}" alt="{{ request.user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          {% else %}
+            <div class="bh-founder-avatar bh-founder-avatar-empty">
+              <i class="bi bi-person" style="font-size: 2rem;"></i>
+            </div>
+          {% endif %}
+          
           <div class="bh-founder-copy">
             <div class="bh-founder-name">{{ request.user.username }}</div>
             <div class="bh-founder-role">Founder seat secured</div>
             <div class="bh-founder-seat">Your account is one of the original five reserved names, so the site treats it like royalty.</div>
+            <p class="text-muted small mt-3 mb-0">👑 This is how you appear in the throne room. Update your picture below to customize your seat.</p>
           </div>
         </div>
       {% endif %}

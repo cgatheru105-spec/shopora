@@ -33,24 +33,26 @@
     </div>
   </section>
 
-  <section class="mb-4">
-    <div class="bh-stat-grid">
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Fresh picks</div>
-        <div class="bh-stat-value">{{ popular_cards|length }}</div>
-      </div>
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Shopping style</div>
-        <div class="bh-stat-value">Simple</div>
-      </div>
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Marketplace</div>
-        <div class="bh-stat-value">Local</div>
+  <section class="bh-section-wrapper mb-4" id="marketplace-stats" aria-label="Marketplace statistics">
+    <div class="bh-section-shell">
+      <div class="bh-stat-grid">
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Fresh picks</div>
+          <div class="bh-stat-value">{{ popular_cards|length }}</div>
+        </div>
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Shopping style</div>
+          <div class="bh-stat-value">Simple</div>
+        </div>
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Marketplace</div>
+          <div class="bh-stat-value">Local</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="mb-5">
+  <section class="bh-section-wrapper mb-5" id="shop-categories" aria-label="Shop by category">
     <div class="bh-page-intro">
       <div>
         <div class="bh-kicker">Start here</div>
@@ -87,7 +89,7 @@
     </div>
   </section>
 
-  <section>
+  <section class="bh-section-wrapper mb-5" id="popular-products" aria-label="Popular products">
     <div class="bh-page-intro">
       <div>
         <div class="bh-kicker">Community favorites</div>
@@ -131,7 +133,7 @@
     {% endif %}
   </section>
 
-  <section id="founders" class="mt-5 mb-5">
+  <section class="bh-section-wrapper mb-5" id="founders" aria-label="Founding members">
     <div class="bh-page-intro">
       <div>
         <div class="bh-kicker">Founding royalty</div>
@@ -147,6 +149,21 @@
           <div class="bh-founder-crown">
             <i class="bi bi-stars"></i>
           </div>
+          
+          {% if founder.profile_picture_url %}
+            <div class="bh-founder-avatar">
+              <img src="{{ founder.profile_picture_url }}" alt="{{ founder.display_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          {% elif founder.is_live %}
+            <div class="bh-founder-avatar bh-founder-avatar-empty">
+              <i class="bi bi-person" style="font-size: 2rem;"></i>
+            </div>
+          {% else %}
+            <div class="bh-founder-avatar bh-founder-avatar-reserved">
+              <i class="bi bi-lock" style="font-size: 2rem;"></i>
+            </div>
+          {% endif %}
+
           <div class="bh-founder-copy">
             <div class="bh-founder-name">{{ founder.display_name }}</div>
             <div class="bh-founder-role">{{ founder.status_label }}</div>
@@ -159,6 +176,11 @@
               <a class="bh-chip text-decoration-none" href="{{ founder.profile_url }}">
                 <span class="bh-chip-dot"></span>View profile
               </a>
+              {% if user.is_authenticated and user.id == founder.user_id %}
+                <a class="bh-chip bh-chip-edit text-decoration-none" href="{% url 'profile_edit' %}">
+                  <span class="bh-chip-dot"></span>Edit seat
+                </a>
+              {% endif %}
             {% else %}
               <span class="bh-chip"><span class="bh-chip-dot"></span>Reserved name</span>
             {% endif %}
@@ -168,9 +190,13 @@
     </div>
   </section>
 
-  <section>
-    <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-      <h2 class="bh-section-title h4 mb-0">Join Our Community</h2>
+  <section class="bh-section-wrapper" id="community-section" aria-label="Community discovery">
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Community hub</div>
+        <h2 class="bh-section-title h4 mb-0">Join Our Community</h2>
+        <p>Connect with sellers, discover new members, and explore the marketplace.</p>
+      </div>
       <a class="btn btn-outline-primary btn-sm" href="{% url 'profiles_search' %}">Browse All Members</a>
     </div>
 

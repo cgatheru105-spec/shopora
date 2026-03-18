@@ -60,14 +60,20 @@ def _get_founders():
         user = founder_by_key.get(username.lower())
         profile = profile_by_user_id.get(user.id) if user else None
         item_count = getattr(user, "item_count", 0) if user else 0
+        profile_picture_url = None
+        if profile and profile.profile_picture:
+            profile_picture_url = profile.profile_picture.url
+        
         founders.append(
             {
                 "seat_name": username,
                 "display_name": user.username if user else username,
                 "profile_type": profile.get_account_type_display() if profile else "",
                 "profile_url": reverse("profile_public", args=[user.username]) if user else "",
+                "profile_picture_url": profile_picture_url,
                 "item_count": item_count,
                 "is_live": bool(user),
+                "user_id": user.id if user else None,
                 "status_label": "Founding Member" if user else "Throne Reserved",
                 "description": (
                     f"{profile.get_account_type_display()} account with {item_count} listing{'s' if item_count != 1 else ''}."
