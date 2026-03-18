@@ -1,46 +1,222 @@
-{% load static %}
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Buyer Dashboard · EcoMart Shopora{% endblock %}
 
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
+
 {% block content %}
-  <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
-    <h1 class="bh-page-title h3 mb-0">Buyer Dashboard</h1>
-    <a class="btn btn-outline-secondary btn-sm" href="{% url 'items_public' %}">Browse items</a>
-  </div>
-
-  <div class="bh-surface p-4">
-    <div class="d-flex align-items-center gap-3 mb-3">
-      {% if profile and profile.profile_picture %}
-        <img
-          src="{{ profile.profile_picture.url }}"
-          class="rounded-circle"
-          width="64"
-          height="64"
-          alt="Profile picture"
-          style="object-fit: cover;"
-        >
-      {% else %}
-        <img
-          src="{% static 'images/logo.png' %}"
-          class="rounded-circle"
-          width="64"
-          height="64"
-          alt="Profile picture"
-        >
-      {% endif %}
-
-      <div>
-        <div class="fw-semibold">{{ user.username }}</div>
-        <div class="text-muted small">{{ user.email }}</div>
+  <div class="bh-dashboard-stack">
+    <section class="bh-surface bh-dashboard-hero p-4 p-lg-5">
+      <div class="bh-page-intro mb-0">
+        <div>
+          <div class="bh-kicker">Buyer hub</div>
+          <h1 class="bh-page-title h3 mb-0">Welcome back, {{ user.username }}</h1>
+          <p>Track the marketplace at a glance, save items to your cart, and jump straight into the best new listings.</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          {% if profile and profile.profile_picture %}
+            <img
+              src="{{ profile.profile_picture.url }}"
+              class="rounded-circle bh-entity-avatar"
+              width="72"
+              height="72"
+              alt="Profile picture"
+              style="object-fit: cover;"
+            >
+          {% else %}
+            <img
+              src="{% static 'images/logo.png' %}"
+              class="rounded-circle bh-entity-avatar"
+              width="72"
+              height="72"
+              alt="Profile picture"
+            >
+          {% endif %}
+          <div>
+            <div class="fw-semibold">{{ user.username }}</div>
+            <div class="text-muted small">{{ user.email }}</div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="d-grid gap-2 d-sm-flex flex-wrap">
-      <a class="btn btn-outline-secondary" href="{% url 'profile_edit' %}">Edit Profile</a>
-      <a class="btn btn-success" href="{% url 'items_public' %}">Browse Groceries</a>
-      <a class="btn btn-outline-success" href="{% url 'book' %}">Products</a>
-      <a class="btn btn-outline-danger" href="{% url 'logout' %}">Logout</a>
-    </div>
+      <div class="bh-chip-row mt-4">
+        <a class="bh-chip text-decoration-none" href="{% url 'items_public' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Browse marketplace
+        </a>
+        <a class="bh-chip text-decoration-none" href="{% url 'book' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Open products
+        </a>
+        <a class="bh-chip text-decoration-none" href="{% url 'profile_edit' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Edit profile
+        </a>
+      </div>
+    </section>
+
+    <section class="bh-snapshot-grid" aria-label="Marketplace overview">
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Listings live</div>
+        <div class="bh-snapshot-value">{{ marketplace_snapshot.total_listings|default:0 }}</div>
+        <div class="bh-snapshot-note">Fresh inventory waiting for buyers</div>
+      </article>
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Active sellers</div>
+        <div class="bh-snapshot-value">{{ marketplace_snapshot.active_sellers|default:0 }}</div>
+        <div class="bh-snapshot-note">Profiles with products ready to browse</div>
+      </article>
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Average price</div>
+        <div class="bh-snapshot-value">
+          {% if marketplace_snapshot.average_price %}${{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+        </div>
+        <div class="bh-snapshot-note">Use it as a guide while you compare</div>
+      </article>
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Community size</div>
+        <div class="bh-snapshot-value">{{ marketplace_snapshot.community_members|default:0 }}</div>
+        <div class="bh-snapshot-note">Buyers and sellers shaping the market</div>
+      </article>
+    </section>
+
+    <section class="bh-section-wrapper">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Recommended now</div>
+          <h2 class="bh-section-title h5 mb-0">Fresh picks for your cart</h2>
+          <p>New arrivals from around the marketplace that you can save right away.</p>
+        </div>
+        <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">See all products</a>
+      </div>
+
+      <div class="row g-3">
+        {% for item in recommended_cards %}
+          <div class="col-12 col-md-6 col-xl-4">
+            <article class="card bh-product-card h-100">
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
+              {% else %}
+                <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+              {% endif %}
+              <div class="card-body">
+                <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                <div class="text-muted small">{{ item.description|truncatechars:90 }}</div>
+                <div class="bh-card-meta mt-3">
+                  <span class="bh-mini-badge">Just added</span>
+                </div>
+                <div class="bh-price mt-2">${{ item.price }}</div>
+              </div>
+              <div class="card-footer bg-transparent border-0 bh-card-footer">
+                <div class="small text-muted">by {{ item.owner_username }}</div>
+                <div class="bh-card-actions">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bh-add-to-cart
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner_username }}"
+                    data-bh-cart-url="{{ item.owner_profile_url }}"
+                    data-bh-cart-image="{{ item.image_url }}"
+                  >Cart</button>
+                  <a class="btn btn-outline-success btn-sm" href="{{ item.owner_profile_url }}">Seller</a>
+                </div>
+              </div>
+            </article>
+          </div>
+        {% empty %}
+          <div class="col-12">
+            <div class="alert alert-info bh-surface bh-empty-state mb-0">No listings yet. Check back after sellers add inventory.</div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="row g-4">
+      <div class="col-lg-6">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Budget lane</div>
+              <h2 class="bh-section-title h5 mb-0">Value picks</h2>
+              <p>Lower-priced finds if you want to scan affordable options first.</p>
+            </div>
+          </div>
+
+          <div class="bh-inline-item-list">
+            {% for item in budget_cards %}
+              <article class="bh-inline-item">
+                <div class="bh-inline-item-thumb">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="{{ item.name }}">
+                  {% endif %}
+                </div>
+                <div class="bh-inline-item-copy">
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">by {{ item.owner_username }}</div>
+                  <p>{{ item.description|truncatechars:72 }}</p>
+                </div>
+                <div class="bh-inline-item-actions">
+                  <div class="bh-price">${{ item.price }}</div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bh-add-to-cart
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner_username }}"
+                    data-bh-cart-url="{{ item.owner_profile_url }}"
+                    data-bh-cart-image="{{ item.image_url }}"
+                  >Save</button>
+                </div>
+              </article>
+            {% empty %}
+              <div class="text-muted small">Budget picks will show up once listings are available.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Seller spotlights</div>
+              <h2 class="bh-section-title h5 mb-0">People worth checking out</h2>
+              <p>Active storefronts with multiple live listings.</p>
+            </div>
+          </div>
+
+          <div class="bh-spotlight-grid">
+            {% for seller in spotlight_sellers %}
+              <article class="bh-spotlight-card">
+                <div class="bh-spotlight-head">
+                  <div class="bh-spotlight-avatar">
+                    {% if seller.profile_picture_url %}
+                      <img src="{{ seller.profile_picture_url }}" alt="{{ seller.username }}">
+                    {% else %}
+                      <img src="{% static 'images/logo.png' %}" alt="{{ seller.username }}">
+                    {% endif %}
+                  </div>
+                  <div>
+                    <div class="bh-spotlight-name">{{ seller.username }}</div>
+                    <div class="bh-spotlight-meta">{{ seller.profile_type }} · {{ seller.item_count }} listing{{ seller.item_count|pluralize }}</div>
+                  </div>
+                </div>
+                <p class="bh-spotlight-copy">Joined {{ seller.joined_at|date:"M Y" }} and already building a strong storefront.</p>
+                <a class="btn btn-outline-success btn-sm" href="{{ seller.profile_url }}">View profile</a>
+              </article>
+            {% empty %}
+              <div class="text-muted small">Seller spotlights will appear as more storefronts go live.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 {% endblock %}

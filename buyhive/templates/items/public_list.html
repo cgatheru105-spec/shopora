@@ -50,35 +50,83 @@
     </form>
   </div>
 
+  <div class="bh-snapshot-grid mb-3">
+    <article class="bh-snapshot-card">
+      <div class="bh-snapshot-label">Matching items</div>
+      <div class="bh-snapshot-value">{{ items_count }}</div>
+      <div class="bh-snapshot-note">Current results for your filters</div>
+    </article>
+    <article class="bh-snapshot-card">
+      <div class="bh-snapshot-label">Active sellers</div>
+      <div class="bh-snapshot-value">{{ marketplace_snapshot.active_sellers|default:0 }}</div>
+      <div class="bh-snapshot-note">Storefronts with live listings</div>
+    </article>
+    <article class="bh-snapshot-card">
+      <div class="bh-snapshot-label">Average price</div>
+      <div class="bh-snapshot-value">
+        {% if marketplace_snapshot.average_price %}${{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+      </div>
+      <div class="bh-snapshot-note">A quick market read before you compare</div>
+    </article>
+  </div>
+
+  <div class="bh-quick-filter-row" aria-label="Quick marketplace filters">
+    <a class="bh-quick-filter {% if not quick_filter %}is-active{% endif %}" href="{% url 'items_public' %}">
+      <i class="bi bi-grid"></i>All picks
+    </a>
+    <a class="bh-quick-filter {% if quick_filter == 'fresh' %}is-active{% endif %}" href="{% url 'items_public' %}?quick=fresh">
+      <i class="bi bi-stars"></i>Fresh arrivals
+    </a>
+    <a class="bh-quick-filter {% if quick_filter == 'budget' %}is-active{% endif %}" href="{% url 'items_public' %}?quick=budget">
+      <i class="bi bi-cash-coin"></i>Budget friendly
+    </a>
+    <a class="bh-quick-filter {% if quick_filter == 'community' %}is-active{% endif %}" href="{% url 'items_public' %}?quick=community">
+      <i class="bi bi-people"></i>Community sellers
+    </a>
+  </div>
+
   {% if items %}
     <div class="row g-3">
       {% for item in items %}
         <div class="col-12 col-md-6 col-lg-4">
-          <div class="card bh-product-card h-100">
-            {% with first_image=item.images.first %}
+          {% with first_image=item.images.first %}
+            <div class="card bh-product-card h-100">
               {% if first_image %}
                 <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
               {% else %}
                 <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
               {% endif %}
-            {% endwith %}
 
-            <div class="card-body">
-              <div class="fw-semibold text-success">{{ item.name }}</div>
-              <div class="text-muted small">{{ item.description|default:"No description available" }}</div>
-              <div class="bh-card-meta mt-3">
-                <span class="bh-mini-badge">Available now</span>
+              <div class="card-body">
+                <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                <div class="text-muted small">{{ item.description|default:"No description available" }}</div>
+                <div class="bh-card-meta mt-3">
+                  <span class="bh-mini-badge">Available now</span>
+                </div>
+              </div>
+
+              <div class="card-footer bg-transparent border-0 bh-card-footer">
+                <div>
+                  <span class="bh-price">${{ item.price }}</span>
+                  <div class="small text-muted">by {{ item.owner.username }}</div>
+                </div>
+                <div class="bh-card-actions">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bh-add-to-cart
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner.username }}"
+                    data-bh-cart-url="{% url 'profile_public' item.owner.username %}"
+                    data-bh-cart-image="{% if first_image %}{{ first_image.image.url }}{% else %}{% static 'images/logo.png' %}{% endif %}"
+                  >Cart</button>
+                  <a class="btn btn-outline-success btn-sm" href="{% url 'profile_public' item.owner.username %}">Seller</a>
+                </div>
               </div>
             </div>
-
-            <div class="card-footer bg-transparent border-0 bh-card-footer">
-              <div>
-                <span class="bh-price">${{ item.price }}</span>
-                <div class="small text-muted">by {{ item.owner.username }}</div>
-              </div>
-              <a class="btn btn-outline-success btn-sm" href="{% url 'profile_public' item.owner.username %}">Seller</a>
-            </div>
-          </div>
+          {% endwith %}
         </div>
       {% endfor %}
     </div>

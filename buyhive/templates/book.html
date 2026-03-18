@@ -42,38 +42,47 @@
     <div class="row g-3">
       {% for item in items %}
         <div class="col-12 col-sm-6 col-lg-3">
-          <div class="card bh-product-card h-100">
-            <div class="position-relative">
-              <span class="badge text-bg-success position-absolute top-0 start-0 m-3">Organic</span>
+          {% with first_image=item.images.first %}
+            <div class="card bh-product-card h-100">
+              <div class="position-relative">
+                <span class="badge text-bg-success position-absolute top-0 start-0 m-3">Organic</span>
 
-              {% with first_image=item.images.first %}
                 {% if first_image %}
                   <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
-                {% elif item.image %}
-                  <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}">
                 {% else %}
                   <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
                 {% endif %}
-              {% endwith %}
-            </div>
-
-            <div class="card-body">
-              <div class="fw-semibold">{{ item.name }}</div>
-              <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
-              <div class="bh-card-meta">
-                <span class="bh-mini-badge">Organic</span>
-                <span class="small text-warning" aria-label="Rating: 5 out of 5">*****</span>
               </div>
-              <div class="bh-price mt-2">${{ item.price }}</div>
-            </div>
 
-            <div class="card-footer bg-transparent border-0">
-              <div class="d-grid gap-2">
-                <button class="btn btn-success" onclick="buyProduct('{{ item.name|escapejs }}')">Buy now</button>
-                <button class="btn btn-outline-success">Add to cart</button>
+              <div class="card-body">
+                <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
+                <div class="bh-card-meta">
+                  <span class="bh-mini-badge">Organic</span>
+                  <span class="small text-warning" aria-label="Rating: 5 out of 5">*****</span>
+                </div>
+                <div class="bh-price mt-2">${{ item.price }}</div>
+              </div>
+
+              <div class="card-footer bg-transparent border-0">
+                <div class="d-grid gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-success"
+                    data-bh-add-to-cart
+                    data-bh-open-cart="true"
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner.username }}"
+                    data-bh-cart-url="{% url 'profile_public' item.owner.username %}"
+                    data-bh-cart-image="{% if first_image %}{{ first_image.image.url }}{% else %}{% static 'images/logo.png' %}{% endif %}"
+                  >Add to cart</button>
+                  <a class="btn btn-outline-success" href="{% url 'profile_public' item.owner.username %}">Seller profile</a>
+                </div>
               </div>
             </div>
-          </div>
+          {% endwith %}
         </div>
       {% endfor %}
     </div>
@@ -86,8 +95,4 @@
 	      {% endif %}
 	    </div>
 	  {% endif %}
-{% endblock %}
-
-{% block extra_js %}
-  <script src="{% static 'js/script.js' %}"></script>
 {% endblock %}

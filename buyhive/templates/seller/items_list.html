@@ -1,20 +1,48 @@
 {% extends 'base.html' %}
 {% block navbar %}
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm bh-navbar">
+<nav class="navbar navbar-expand-lg bh-navbar" aria-label="Seller workspace">
   <div class="container">
-    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'dashboard' %}">
-      <span class="bh-brand-mark"></span>
-      <span>EcoMart Shopora</span>
-    </a>
+    <div class="bh-navbar-shell">
+      <a class="navbar-brand bh-navbar-brand d-flex align-items-center gap-3" href="{% url 'dashboard' %}">
+        <span class="bh-brand-mark" aria-hidden="true"></span>
+        <span class="bh-brand-copy">
+          <span class="bh-brand-title">EcoMart Shopora</span>
+          <span class="bh-brand-subtitle">Seller workspace</span>
+        </span>
+      </a>
 
-    <div class="ms-auto d-flex gap-2">
-      <a class="btn btn-light btn-sm" href="{% url 'seller_item_create' %}">Add Item</a>
-      <a class="btn btn-outline-light btn-sm" href="{% url 'profile_edit' %}">Profile</a>
-      <a class="btn btn-outline-light btn-sm" href="{% url 'profiles_search' %}">Profiles</a>
-      <a class="btn btn-outline-light btn-sm" href="{% url 'dashboard' %}">Dashboard</a>
-      <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">Logout</a>
+      <button class="navbar-toggler bh-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sellerTopnav" aria-controls="sellerTopnav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="collapse navbar-collapse bh-navbar-collapse" id="sellerTopnav">
+        <ul class="navbar-nav bh-navbar-links">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="{% url 'seller_items' %}">Inventory</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile_edit' %}">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profiles_search' %}">Profiles</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+          </li>
+        </ul>
+
+        <div class="bh-navbar-actions">
+          <a class="btn bh-navbar-action bh-navbar-action-strong" href="{% url 'seller_item_create' %}">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+            <span>Add item</span>
+          </a>
+          <a class="btn bh-navbar-action bh-navbar-action-muted" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -29,6 +57,7 @@
       <h2 class="bh-page-title h3 mb-0">My Items</h2>
       <p>Manage your current listings, keep prices updated, and jump into edits quickly.</p>
     </div>
+    <a class="btn btn-success btn-sm" href="{% url 'seller_item_create' %}">Add Item</a>
   </div>
 
   {% if items %}

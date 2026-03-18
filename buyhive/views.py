@@ -12,6 +12,16 @@ from .forms import ItemFilterForm, ItemForm, LoginForm, ProfilePictureForm, Regi
 from .models import Item, ItemImage, Profile
 
 
+def _active_seller_ids(limit=6, minimum_items=2):
+    return list(
+        Item.objects.values("owner")
+        .annotate(item_count=models.Count("id"))
+        .filter(item_count__gte=minimum_items)
+        .order_by("-item_count", "owner")
+        .values_list("owner", flat=True)[:limit]
+    )
+
+
 def _founder_filter():
     founder_query = models.Q()
     for username in FOUNDER_USERNAMES:
@@ -32,6 +42,7 @@ def _first_item_image_url(item):
 
 def _serialize_item_card(item, include_owner=False):
     card = {
+        "id": item.id,
         "name": item.name,
         "description": item.description or "No description available",
         "price": item.price,
@@ -42,6 +53,59 @@ def _serialize_item_card(item, include_owner=False):
         card["owner_username"] = item.owner.username
         card["owner_profile_url"] = reverse("profile_public", args=[item.owner.username])
     return card
+
+
+def _get_marketplace_snapshot():
+    snapshot = Item.objects.aggregate(
+        total_listings=models.Count("id"),
+        average_price=models.Avg("price"),
+        lowest_price=models.Min("price"),
+        newest_listing=models.Max("created_at"),
+    )
+    snapshot["active_sellers"] = (
+        Item.objects.values("owner").distinct().count()
+    )
+    snapshot["community_members"] = Profile.objects.exclude(
+        account_type=Profile.ACCOUNT_STAFF
+    ).count()
+    return snapshot
+
+
+def _get_spotlight_sellers(limit=4, exclude_user_id=None):
+    User = get_user_model()
+    users = User.objects.annotate(item_count=models.Count("items", distinct=True)).filter(
+        item_count__gt=0
+    )
+    if exclude_user_id is not None:
+        users = users.exclude(pk=exclude_user_id)
+
+    users = list(users.order_by("-item_count", "-date_joined", "username")[:limit])
+    if not users:
+        return []
+
+    profiles = Profile.objects.select_related("user").filter(user__in=users)
+    profile_by_user_id = {profile.user_id: profile for profile in profiles}
+
+    spotlights = []
+    for user in users:
+        profile = profile_by_user_id.get(user.id)
+        profile_picture_url = (
+            profile.profile_picture.url
+            if profile and profile.profile_picture
+            else ""
+        )
+        spotlights.append(
+            {
+                "username": user.username,
+                "item_count": user.item_count,
+                "profile_type": profile.get_account_type_display() if profile else "Member",
+                "profile_url": reverse("profile_public", args=[user.username]),
+                "profile_picture_url": profile_picture_url,
+                "joined_at": user.date_joined,
+                "is_founder": user.username.lower() in FOUNDER_USERNAMES_BY_KEY,
+            }
+        )
+    return spotlights
 
 
 def _get_founders():
@@ -89,38 +153,51 @@ def _get_founders():
 
 # Create your views here.
 def index(request):
-    # Get popular items - items from sellers with multiple listings (proxy for active sellers)
-    # Since we don't have sales data, we'll use sellers with most items as a popularity proxy
-    popular_sellers = (
-        Item.objects.values('owner')
-        .annotate(item_count=models.Count('id'))
-        .filter(item_count__gt=1)  # Only sellers with more than 1 item
-        .order_by('-item_count')[:3]  # Top 3 most active sellers
-        .values_list('owner', flat=True)
-    )
-    
+    popular_sellers = _active_seller_ids(limit=4, minimum_items=2)
+
     popular_items = list(
-        Item.objects.select_related('owner')
-        .prefetch_related('images')
+        Item.objects.select_related("owner")
+        .prefetch_related("images")
         .filter(owner__in=popular_sellers)
-        .order_by('-created_at')[:8]  # Get up to 8 items from popular sellers
+        .order_by("-created_at")[:8]
     )
     popular_cards = [
         _serialize_item_card(item, include_owner=True) for item in popular_items
     ]
-    
+
+    fresh_cards = [
+        _serialize_item_card(item, include_owner=True)
+        for item in Item.objects.select_related("owner")
+        .prefetch_related("images")
+        .order_by("-created_at")[:4]
+    ]
+    budget_cards = [
+        _serialize_item_card(item, include_owner=True)
+        for item in Item.objects.select_related("owner")
+        .prefetch_related("images")
+        .order_by("price", "-created_at")[:4]
+    ]
+
     return render(
         request,
         "index.html",
         {
             "popular_cards": popular_cards,
+            "fresh_cards": fresh_cards,
+            "budget_cards": budget_cards,
+            "spotlight_sellers": _get_spotlight_sellers(),
+            "marketplace_snapshot": _get_marketplace_snapshot(),
             "founders": _get_founders(),
         },
     )
 
 def Buy_products(request):
     q = (request.GET.get("q") or "").strip()
-    items = Item.objects.prefetch_related("images").order_by("-created_at")
+    items = (
+        Item.objects.select_related("owner")
+        .prefetch_related("images")
+        .order_by("-created_at")
+    )
     if q:
         items = items.filter(
             models.Q(name__icontains=q) | models.Q(description__icontains=q)
@@ -190,14 +267,44 @@ def dashboard(request):
         total_items = items.count()
         total_value = sum(item.price for item in items) if items else 0
         recent_items = items.order_by('-created_at')[:5]  # For slider
+        seller_snapshot = items.aggregate(
+            average_price=models.Avg("price"),
+            latest_listing=models.Max("created_at"),
+        )
         return render(request, "seller/dashboard.html", {
             "profile": profile,
             "total_items": total_items,
             "total_value": total_value,
             "recent_items": recent_items,
+            "seller_snapshot": seller_snapshot,
         })
 
-    return render(request, "buyer/dashboard.html", {"profile": profile})
+    buyer_cards = [
+        _serialize_item_card(item, include_owner=True)
+        for item in Item.objects.select_related("owner")
+        .prefetch_related("images")
+        .order_by("-created_at")[:3]
+    ]
+    budget_cards = [
+        _serialize_item_card(item, include_owner=True)
+        for item in Item.objects.select_related("owner")
+        .prefetch_related("images")
+        .order_by("price", "-created_at")[:3]
+    ]
+
+    return render(
+        request,
+        "buyer/dashboard.html",
+        {
+            "profile": profile,
+            "marketplace_snapshot": _get_marketplace_snapshot(),
+            "recommended_cards": buyer_cards,
+            "budget_cards": budget_cards,
+            "spotlight_sellers": _get_spotlight_sellers(
+                limit=3, exclude_user_id=request.user.id
+            ),
+        },
+    )
 
 
 @login_required
@@ -234,6 +341,8 @@ def items_public_list(request):
         .prefetch_related("images")
         .order_by("-created_at")
     )
+    quick_filter = (request.GET.get("quick") or "").strip()
+    marketplace_snapshot = _get_marketplace_snapshot()
 
     if form.is_valid():
         # Search filter
@@ -258,9 +367,23 @@ def items_public_list(request):
         if sort_by:
             items = items.order_by(sort_by)
 
+    if quick_filter == "budget" and marketplace_snapshot.get("average_price") is not None:
+        items = items.filter(price__lte=marketplace_snapshot["average_price"]).order_by(
+            "price", "-created_at"
+        )
+    elif quick_filter == "community":
+        items = items.filter(owner__in=_active_seller_ids(limit=12, minimum_items=2))
+    elif quick_filter == "fresh":
+        items = items.order_by("-created_at")
+
+    items_count = items.count()
+
     return render(request, "items/public_list.html", {
         "items": items,
-        "filter_form": form
+        "filter_form": form,
+        "quick_filter": quick_filter,
+        "items_count": items_count,
+        "marketplace_snapshot": marketplace_snapshot,
     })
 
 def profiles_search(request):

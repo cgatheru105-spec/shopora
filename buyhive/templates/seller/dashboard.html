@@ -2,6 +2,7 @@
 {% load static %}
 {%block extra_head %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{% static 'css/public.css' %}">
 {%endblock %}
 {%block content%}
 <div class="row">
@@ -59,14 +60,18 @@
       </div>
       <div class="col-md-6 col-lg-3 mb-3">
         <div class="bh-surface p-3 text-center">
-          <div class="h4 mb-1 text-info">0</div>
-          <div class="text-muted small">Sales</div>
+          <div class="h4 mb-1 text-primary">
+            {% if seller_snapshot.average_price %}${{ seller_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+          </div>
+          <div class="text-muted small">Average Price</div>
         </div>
       </div>
       <div class="col-md-6 col-lg-3 mb-3">
         <div class="bh-surface p-3 text-center">
-          <div class="h4 mb-1 text-warning">$0.00</div>
-          <div class="text-muted small">Revenue</div>
+          <div class="h4 mb-1 text-warning">
+            {% if seller_snapshot.latest_listing %}{{ seller_snapshot.latest_listing|date:"M j" }}{% else %}-{% endif %}
+          </div>
+          <div class="text-muted small">Latest Listing</div>
         </div>
       </div>
     </div>

@@ -17,7 +17,21 @@
         var theme = useDark ? "dark" : "light";
         document.documentElement.setAttribute("data-bs-theme", theme);
         document.documentElement.setAttribute("data-bh-theme", theme);
-      } catch (e) {}
+        document.documentElement.setAttribute("data-bh-theme-preference", pref);
+        document.documentElement.style.colorScheme = theme;
+
+        // Also set a class for immediate styling if needed
+        if (theme === "dark") {
+          document.documentElement.classList.add("theme-dark");
+        } else {
+          document.documentElement.classList.remove("theme-dark");
+        }
+      } catch (e) {
+        // Fallback to light theme
+        document.documentElement.setAttribute("data-bs-theme", "light");
+        document.documentElement.setAttribute("data-bh-theme", "light");
+        document.documentElement.style.colorScheme = "light";
+      }
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,61 +45,86 @@
 <body class="bh-body">
   <a class="bh-skip-link" href="#bh-main">Skip to content</a>
   {% block navbar %}
-  <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm bh-navbar" aria-label="Primary">
+  <nav class="navbar navbar-expand-lg bh-navbar" aria-label="Primary">
     <div class="container">
-      <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{% url 'index' %}">
-        <span class="bh-brand-mark"></span>
-        <span>EcoMart Shopora</span>
-      </a>
+      <div class="bh-navbar-shell">
+        <a class="navbar-brand bh-navbar-brand d-flex align-items-center gap-3" href="{% url 'index' %}">
+          <span class="bh-brand-mark" aria-hidden="true"></span>
+          <span class="bh-brand-copy">
+            <span class="bh-brand-title">EcoMart Shopora</span>
+            <span class="bh-brand-subtitle">Local marketplace</span>
+          </span>
+        </a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav" aria-controls="topnav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+        <button class="navbar-toggler bh-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav" aria-controls="topnav" aria-expanded="false" aria-label="Toggle navigation">
+          <i class="bi bi-list" aria-hidden="true"></i>
+        </button>
 
-      <div class="collapse navbar-collapse" id="topnav">
-        {% with current=request.resolver_match.url_name %}
-        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-          <li class="nav-item">
-            <a class="nav-link {% if current == 'items_public' %}active{% endif %}" {% if current == 'items_public' %}aria-current="page"{% endif %} href="{% url 'items_public' %}">Browse</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'index' %}#founders">Founders</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if current == 'profiles_search' or current == 'profile_public' %}active{% endif %}" {% if current == 'profiles_search' or current == 'profile_public' %}aria-current="page"{% endif %} href="{% url 'profiles_search' %}">Profiles</a>
-          </li>
+        <div class="collapse navbar-collapse bh-navbar-collapse" id="topnav">
+          {% with current=request.resolver_match.url_name %}
+          <ul class="navbar-nav bh-navbar-links">
+            <li class="nav-item">
+              <a class="nav-link {% if current == 'items_public' %}active{% endif %}" {% if current == 'items_public' %}aria-current="page"{% endif %} href="{% url 'items_public' %}">Browse</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'index' %}#founders">Founders</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if current == 'profiles_search' or current == 'profile_public' %}active{% endif %}" {% if current == 'profiles_search' or current == 'profile_public' %}aria-current="page"{% endif %} href="{% url 'profiles_search' %}">Profiles</a>
+            </li>
+            {% if user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link {% if current == 'dashboard' %}active{% endif %}" {% if current == 'dashboard' %}aria-current="page"{% endif %} href="{% url 'dashboard' %}">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if current == 'profile_edit' %}active{% endif %}" {% if current == 'profile_edit' %}aria-current="page"{% endif %} href="{% url 'profile_edit' %}">Profile</a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link {% if current == 'login' %}active{% endif %}" {% if current == 'login' %}aria-current="page"{% endif %} href="{% url 'login' %}">Login</a>
+              </li>
+            {% endif %}
+          </ul>
 
-          {% if user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link {% if current == 'dashboard' %}active{% endif %}" {% if current == 'dashboard' %}aria-current="page"{% endif %} href="{% url 'dashboard' %}">Dashboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if current == 'profile_edit' %}active{% endif %}" {% if current == 'profile_edit' %}aria-current="page"{% endif %} href="{% url 'profile_edit' %}">Profile</a>
-            </li>
-            <li class="nav-item">
-              <a class="btn btn-sm btn-outline-light" href="{% url 'logout' %}">Logout</a>
-            </li>
-          {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'login' %}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="btn btn-sm btn-light" href="{% url 'register' %}">Register</a>
-            </li>
-          {% endif %}
+          <div class="bh-navbar-actions">
+            {% if user.is_authenticated %}
+              <a class="btn bh-navbar-action bh-navbar-action-muted" href="{% url 'logout' %}">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                <span>Logout</span>
+              </a>
+            {% else %}
+              <a class="btn bh-navbar-action bh-navbar-action-strong" href="{% url 'register' %}">
+                <i class="bi bi-person-plus" aria-hidden="true"></i>
+                <span>Register</span>
+              </a>
+            {% endif %}
 
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Theme: <span data-bh-theme-label>System</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" data-bh-theme-menu>
-              <li><a class="dropdown-item" href="#" data-bh-theme="system">System</a></li>
-              <li><a class="dropdown-item" href="#" data-bh-theme="light">Light</a></li>
-              <li><a class="dropdown-item" href="#" data-bh-theme="dark">Dark</a></li>
-            </ul>
-          </li>
-        </ul>
-        {% endwith %}
+            <button class="btn bh-navbar-action bh-cart-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#bhCartCanvas" aria-controls="bhCartCanvas">
+              <i class="bi bi-basket3" aria-hidden="true"></i>
+              <span>Cart</span>
+              <span class="badge rounded-pill text-bg-light d-none" data-bh-cart-count>0</span>
+            </button>
+
+            <div class="dropdown">
+              <button class="btn bh-navbar-action bh-navbar-mode dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Theme selector">
+                <i class="bi bi-circle-half" aria-hidden="true"></i>
+                <span data-bh-theme-label>System</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" data-bh-theme-menu>
+                <li><a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bh-theme="system" aria-current="false">
+                  System <i class="bi bi-check-lg ms-2" data-bh-theme-check="system" style="opacity: 0;"></i>
+                </a></li>
+                <li><a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bh-theme="light" aria-current="false">
+                  Light <i class="bi bi-check-lg ms-2" data-bh-theme-check="light" style="opacity: 0;"></i>
+                </a></li>
+                <li><a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bh-theme="dark" aria-current="false">
+                  Dark <i class="bi bi-check-lg ms-2" data-bh-theme-check="dark" style="opacity: 0;"></i>
+                </a></li>
+              </ul>
+            </div>
+          </div>
+          {% endwith %}
+        </div>
       </div>
     </div>
   </nav>
@@ -131,6 +170,44 @@
       </div>
     </div>
   </footer>
+
+  <div class="offcanvas offcanvas-end bh-cart-canvas" tabindex="-1" id="bhCartCanvas" aria-labelledby="bhCartCanvasLabel">
+    <div class="offcanvas-header">
+      <div>
+        <div class="bh-kicker mb-1">Saved cart</div>
+        <h2 class="offcanvas-title h5 mb-0" id="bhCartCanvasLabel">Your picks</h2>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column gap-3">
+      <div class="bh-cart-summary">
+        <div>
+          <div class="small text-muted">Items saved on this device</div>
+          <div class="fw-semibold" data-bh-cart-items-label>0 items</div>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted">Estimated total</div>
+          <div class="bh-price mb-0" data-bh-cart-subtotal>$0.00</div>
+        </div>
+      </div>
+
+      <div class="bh-cart-empty bh-inline-panel text-center" data-bh-cart-empty>
+        <div class="fw-semibold mb-1">Your cart is empty</div>
+        <p class="text-muted small mb-3">Save products as you browse. They stay on this device until you clear them.</p>
+        <a class="btn btn-success btn-sm" href="{% url 'book' %}" data-bs-dismiss="offcanvas">Explore products</a>
+      </div>
+
+      <div class="bh-cart-list" data-bh-cart-items data-bh-cart-placeholder="{% static 'images/logo.png' %}"></div>
+
+      <div class="bh-cart-footer mt-auto">
+        <div class="small text-muted mb-2" data-bh-cart-note>Save products as you browse and compare sellers before you decide.</div>
+        <div class="d-grid gap-2">
+          <a class="btn btn-success" href="{% url 'book' %}" data-bs-dismiss="offcanvas">Continue shopping</a>
+          <button type="button" class="btn btn-outline-secondary" data-bh-cart-clear>Clear saved cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <button type="button" class="btn btn-success bh-back-to-top" data-bh-back-to-top aria-label="Back to top">
     <i class="bi bi-arrow-up"></i>

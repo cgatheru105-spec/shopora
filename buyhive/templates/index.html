@@ -37,16 +37,18 @@
     <div class="bh-section-shell">
       <div class="bh-stat-grid">
         <div class="bh-stat-card">
-          <div class="bh-stat-label">Fresh picks</div>
-          <div class="bh-stat-value">{{ popular_cards|length }}</div>
+          <div class="bh-stat-label">Live sellers</div>
+          <div class="bh-stat-value">{{ marketplace_snapshot.active_sellers|default:0 }}</div>
         </div>
         <div class="bh-stat-card">
-          <div class="bh-stat-label">Shopping style</div>
-          <div class="bh-stat-value">Simple</div>
+          <div class="bh-stat-label">Listings live</div>
+          <div class="bh-stat-value">{{ marketplace_snapshot.total_listings|default:0 }}</div>
         </div>
         <div class="bh-stat-card">
-          <div class="bh-stat-label">Marketplace</div>
-          <div class="bh-stat-value">Local</div>
+          <div class="bh-stat-label">Average price</div>
+          <div class="bh-stat-value">
+            {% if marketplace_snapshot.average_price %}${{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+          </div>
         </div>
       </div>
     </div>
@@ -111,7 +113,7 @@
               {% endif %}
 
               <div class="card-body">
-                <div class="fw-semibold text-success">{{ item.name }}</div>
+                <div class="fw-semibold bh-product-name">{{ item.name }}</div>
                 <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
                 <div class="bh-card-meta mt-3">
                   <span class="bh-mini-badge">Popular</span>
@@ -122,7 +124,20 @@
 
               <div class="card-footer bg-transparent border-0 bh-card-footer">
                 <small class="text-muted">by {{ item.owner_username }}</small>
-                <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
+                <div class="bh-card-actions">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bh-add-to-cart
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner_username }}"
+                    data-bh-cart-url="{{ item.owner_profile_url }}"
+                    data-bh-cart-image="{{ item.image_url }}"
+                  >Cart</button>
+                  <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
+                </div>
               </div>
             </article>
           </div>
@@ -133,59 +148,199 @@
     {% endif %}
   </section>
 
-  <section class="bh-section-wrapper mb-5" id="founders" aria-label="Founding members">
+  {% if spotlight_sellers %}
+    <section class="bh-section-wrapper mb-5" id="seller-spotlights" aria-label="Seller spotlights">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Seller spotlights</div>
+          <h2 class="bh-section-title h4 mb-0">Browse the active storefronts</h2>
+          <p>Profiles with a deeper catalog so shoppers can compare more than one item at a time.</p>
+        </div>
+        <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}?account_type=seller&sort_by=items_count">See sellers</a>
+      </div>
+
+      <div class="bh-spotlight-grid">
+        {% for seller in spotlight_sellers %}
+          <article class="bh-spotlight-card">
+            <div class="bh-spotlight-head">
+              <div class="bh-spotlight-avatar">
+                {% if seller.profile_picture_url %}
+                  <img src="{{ seller.profile_picture_url }}" alt="{{ seller.username }}">
+                {% else %}
+                  <img src="{% static 'images/logo.png' %}" alt="{{ seller.username }}">
+                {% endif %}
+              </div>
+              <div>
+                <div class="bh-spotlight-name">{{ seller.username }}</div>
+                <div class="bh-spotlight-meta">{{ seller.profile_type }} · {{ seller.item_count }} listing{{ seller.item_count|pluralize }}</div>
+              </div>
+            </div>
+            <p class="bh-spotlight-copy">
+              {% if seller.is_founder %}
+                Founder storefront with an established catalog and community presence.
+              {% else %}
+                Active seller profile with multiple live listings ready to browse.
+              {% endif %}
+            </p>
+            <a class="btn btn-outline-success btn-sm" href="{{ seller.profile_url }}">View seller</a>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="bh-section-wrapper mb-5" id="smart-picks" aria-label="Smart picks">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Fresh arrivals</div>
+              <h2 class="bh-section-title h5 mb-0">New to the marketplace</h2>
+              <p>Recently listed products you can save to cart right away.</p>
+            </div>
+          </div>
+          <div class="bh-inline-item-list">
+            {% for item in fresh_cards %}
+              <article class="bh-inline-item">
+                <div class="bh-inline-item-thumb">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="{{ item.name }}">
+                  {% endif %}
+                </div>
+                <div class="bh-inline-item-copy">
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">by {{ item.owner_username }}</div>
+                  <p>{{ item.description|truncatechars:78 }}</p>
+                </div>
+                <div class="bh-inline-item-actions">
+                  <div class="bh-price">${{ item.price }}</div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bh-add-to-cart
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner_username }}"
+                    data-bh-cart-url="{{ item.owner_profile_url }}"
+                    data-bh-cart-image="{{ item.image_url }}"
+                  >Save</button>
+                </div>
+              </article>
+            {% empty %}
+              <div class="text-muted small">Fresh arrivals will appear here once sellers post new items.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Budget friendly</div>
+              <h2 class="bh-section-title h5 mb-0">Lower-priced picks</h2>
+              <p>Start with value buys if you want to keep your basket practical.</p>
+            </div>
+          </div>
+          <div class="bh-inline-item-list">
+            {% for item in budget_cards %}
+              <article class="bh-inline-item">
+                <div class="bh-inline-item-thumb">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="{{ item.name }}">
+                  {% endif %}
+                </div>
+                <div class="bh-inline-item-copy">
+                  <div class="fw-semibold">{{ item.name }}</div>
+                  <div class="small text-muted">by {{ item.owner_username }}</div>
+                  <p>{{ item.description|truncatechars:78 }}</p>
+                </div>
+                <div class="bh-inline-item-actions">
+                  <div class="bh-price">${{ item.price }}</div>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bh-add-to-cart
+                    data-bh-cart-id="item-{{ item.id }}"
+                    data-bh-cart-name="{{ item.name }}"
+                    data-bh-cart-price="{{ item.price }}"
+                    data-bh-cart-seller="{{ item.owner_username }}"
+                    data-bh-cart-url="{{ item.owner_profile_url }}"
+                    data-bh-cart-image="{{ item.image_url }}"
+                  >Save</button>
+                </div>
+              </article>
+            {% empty %}
+              <div class="text-muted small">Budget picks will appear as items are added to the marketplace.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bh-section-wrapper mb-5" id="founders" aria-labelledby="throne-room-title" aria-describedby="throne-room-description">
     <div class="bh-page-intro">
       <div>
         <div class="bh-kicker">Founding royalty</div>
-        <h2 class="bh-section-title h4 mb-0">The throne room</h2>
-        <p>These five seats are reserved for the founding names. Once their accounts exist, they show up here like marketplace kings.</p>
+        <h2 id="throne-room-title" class="bh-section-title h4 mb-0">The throne room</h2>
+        <p id="throne-room-description" class="mb-0">These five seats are reserved for the founding names. Once their accounts exist, they show up here like marketplace kings.</p>
       </div>
-      <a class="btn btn-outline-warning btn-sm" href="{% url 'profiles_search' %}?sort_by=items_count">Meet the community</a>
+      <a class="btn btn-outline-warning btn-sm" href="{% url 'profiles_search' %}?sort_by=items_count" aria-label="Browse all community members">Meet the community</a>
     </div>
 
-    <div class="bh-founder-grid">
+    <div class="bh-founder-grid" role="grid" aria-label="Founding members showcase">
       {% for founder in founders %}
-        <div class="bh-founder-card {% if not founder.is_live %}is-empty{% endif %}">
-          <div class="bh-founder-crown">
-            <i class="bi bi-stars"></i>
-          </div>
-          
+        <article class="bh-founder-card {% if not founder.is_live %}is-empty{% endif %}" role="gridcell" aria-labelledby="founder-{{ forloop.counter }}-name" {% if founder.is_live %}aria-describedby="founder-{{ forloop.counter }}-status"{% endif %}>
+          <header class="bh-founder-crown" aria-hidden="true">
+            <i class="bi bi-stars" aria-hidden="true"></i>
+          </header>
+
           {% if founder.profile_picture_url %}
-            <div class="bh-founder-avatar">
-              <img src="{{ founder.profile_picture_url }}" alt="{{ founder.display_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+            <div class="bh-founder-avatar" role="img" aria-label="Profile picture of {{ founder.display_name }}">
+              <img src="{{ founder.profile_picture_url }}" alt="Profile picture of {{ founder.display_name }}" loading="lazy">
             </div>
           {% elif founder.is_live %}
-            <div class="bh-founder-avatar bh-founder-avatar-empty">
-              <i class="bi bi-person" style="font-size: 2rem;"></i>
+            <div class="bh-founder-avatar bh-founder-avatar-empty" role="img" aria-label="Default avatar for {{ founder.display_name }}">
+              <i class="bi bi-person" aria-hidden="true"></i>
             </div>
           {% else %}
-            <div class="bh-founder-avatar bh-founder-avatar-reserved">
-              <i class="bi bi-lock" style="font-size: 2rem;"></i>
+            <div class="bh-founder-avatar bh-founder-avatar-reserved" role="img" aria-label="Reserved seat for {{ founder.display_name }}">
+              <i class="bi bi-lock" aria-hidden="true"></i>
             </div>
           {% endif %}
 
           <div class="bh-founder-copy">
-            <div class="bh-founder-name">{{ founder.display_name }}</div>
-            <div class="bh-founder-role">{{ founder.status_label }}</div>
-            <div class="bh-founder-seat">{{ founder.description }}</div>
+            <h3 id="founder-{{ forloop.counter }}-name" class="bh-founder-name">{{ founder.display_name }}</h3>
+            <div class="bh-founder-role" {% if founder.is_live %}id="founder-{{ forloop.counter }}-status"{% endif %}>{{ founder.status_label }}</div>
+            <p class="bh-founder-seat">{{ founder.description }}</p>
           </div>
 
-          <div class="bh-chip-row">
+          <footer class="bh-chip-row" role="group" aria-label="Founder actions and status">
             {% if founder.is_live %}
-              <span class="bh-chip"><span class="bh-chip-dot"></span>Crowned</span>
-              <a class="bh-chip text-decoration-none" href="{{ founder.profile_url }}">
-                <span class="bh-chip-dot"></span>View profile
+              <span class="bh-chip" aria-label="Active founding member">
+                <span class="bh-chip-dot" aria-hidden="true"></span>Crowned
+              </span>
+              <a class="bh-chip text-decoration-none" href="{{ founder.profile_url }}" aria-label="View {{ founder.display_name }}'s profile">
+                <span class="bh-chip-dot" aria-hidden="true"></span>View profile
               </a>
               {% if user.is_authenticated and user.id == founder.user_id %}
-                <a class="bh-chip bh-chip-edit text-decoration-none" href="{% url 'profile_edit' %}">
-                  <span class="bh-chip-dot"></span>Edit seat
+                <a class="bh-chip bh-chip-edit text-decoration-none" href="{% url 'profile_edit' %}" aria-label="Edit your founder profile">
+                  <span class="bh-chip-dot" aria-hidden="true"></span>Edit seat
                 </a>
               {% endif %}
             {% else %}
-              <span class="bh-chip"><span class="bh-chip-dot"></span>Reserved name</span>
+              <span class="bh-chip" aria-label="Reserved seat for future founding member">
+                <span class="bh-chip-dot" aria-hidden="true"></span>Reserved name
+              </span>
             {% endif %}
-          </div>
-        </div>
+          </footer>
+        </article>
       {% endfor %}
     </div>
   </section>
@@ -204,7 +359,9 @@
       <div class="row g-4">
         <div class="col-md-4">
           <div class="mb-3">
-            <i class="bi bi-people-fill text-success" style="font-size: 3rem;"></i>
+            <div class="bh-feature-icon bh-feature-icon--success">
+              <i class="bi bi-people-fill" aria-hidden="true"></i>
+            </div>
           </div>
           <h5 class="mb-2">Connect with Sellers</h5>
           <p class="text-muted mb-3">Find trusted local sellers and browse their profiles</p>
@@ -212,7 +369,9 @@
         </div>
         <div class="col-md-4">
           <div class="mb-3">
-            <i class="bi bi-search text-primary" style="font-size: 3rem;"></i>
+            <div class="bh-feature-icon bh-feature-icon--info">
+              <i class="bi bi-search" aria-hidden="true"></i>
+            </div>
           </div>
           <h5 class="mb-2">Easy Discovery</h5>
           <p class="text-muted mb-3">Search by username or filter by account type</p>
@@ -220,7 +379,9 @@
         </div>
         <div class="col-md-4">
           <div class="mb-3">
-            <i class="bi bi-star-fill text-warning" style="font-size: 3rem;"></i>
+            <div class="bh-feature-icon bh-feature-icon--warn">
+              <i class="bi bi-star-fill" aria-hidden="true"></i>
+            </div>
           </div>
           <h5 class="mb-2">Active Community</h5>
           <p class="text-muted mb-3">See who's most active and join the conversation</p>
