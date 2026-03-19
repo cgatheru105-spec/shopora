@@ -233,8 +233,15 @@ def Buy_products(request):
     available_only = request.GET.get("available_only") == "on"
     if available_only:
         items = items.filter(is_available=True)
-    
-    return render(request, "book.html", {"items": items, "q": q, "available_only": available_only})
+
+    items_count = items.count()
+
+    return render(request, "book.html", {
+        "items": items,
+        "items_count": items_count,
+        "q": q,
+        "available_only": available_only,
+    })
 
 def login_user(request):
     if request.user.is_authenticated:

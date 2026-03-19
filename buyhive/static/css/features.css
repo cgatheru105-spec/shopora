@@ -215,3 +215,36 @@
     font-size: 14px;
   }
 }
+
+/* Product card image and overlay animations */
+.bh-product-card .card-img-top{
+  transition: transform 420ms cubic-bezier(.2,.9,.2,1), filter 320ms ease;
+  will-change: transform;
+}
+
+.bh-product-card:hover .card-img-top{
+  transform: scale(1.04) translateY(-4px);
+  filter: saturate(1.06);
+}
+
+.bh-product-card .bh-card-overlay{
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  transform: translateY(100%);
+  transition: transform 320ms cubic-bezier(.2,.9,.2,1), opacity 240ms ease;
+  opacity: 0;
+}
+
+.bh-product-card:hover .bh-card-overlay{
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Small interactions */
+.bh-wishlist-btn.active{ animation: bh-pulse 900ms ease-in-out; }
+
+.bh-rating-star{
+  transition: transform 160ms ease, color 160ms ease;
+}
+.bh-rating-star:hover{ transform: translateY(-3px) scale(1.08); color: #ffb74d; }
+

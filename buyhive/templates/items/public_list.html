@@ -13,59 +13,116 @@
     <div class="bh-section-shell">
       <div class="bh-page-intro mb-4">
         <div>
+          <div class="bh-kicker">Marketplace</div>
           <h1 class="bh-section-title h3 mb-0">Browse All Items</h1>
-          <p class="text-muted">{{ items_count }} product{{ items_count|pluralize }}</p>
+          <p class="text-muted">Compare sellers, refine the catalog, and move from discovery to checkout faster.</p>
+        </div>
+        <div class="bh-results-actions">
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'book' %}">Quick shop</a>
+          <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}">Seller profiles</a>
         </div>
       </div>
 
-      <!-- Filters -->
-      <div class="row mb-4">
+      <div class="bh-quick-filter-row" aria-label="Marketplace quick filters">
+        <a href="{% url 'items_public' %}" class="bh-quick-filter {% if not quick_filter and not available_only and not request.GET.search and not request.GET.min_price and not request.GET.max_price and not request.GET.sort_by %}is-active{% endif %}">
+          <i class="bi bi-grid"></i>
+          <span>All listings</span>
+        </a>
+        <a href="{% url 'items_public' %}?available_only=on" class="bh-quick-filter {% if available_only and not quick_filter %}is-active{% endif %}">
+          <i class="bi bi-check2-circle"></i>
+          <span>Available now</span>
+        </a>
+        <a href="{% url 'items_public' %}?quick=budget" class="bh-quick-filter {% if quick_filter == 'budget' %}is-active{% endif %}">
+          <i class="bi bi-cash-coin"></i>
+          <span>Budget picks</span>
+        </a>
+        <a href="{% url 'items_public' %}?quick=community" class="bh-quick-filter {% if quick_filter == 'community' %}is-active{% endif %}">
+          <i class="bi bi-people"></i>
+          <span>Community sellers</span>
+        </a>
+        <a href="{% url 'items_public' %}?quick=fresh" class="bh-quick-filter {% if quick_filter == 'fresh' %}is-active{% endif %}">
+          <i class="bi bi-stars"></i>
+          <span>Fresh listings</span>
+        </a>
+      </div>
+
+      <div class="row g-4 mb-4">
         <div class="col-lg-3">
-          <form method="get" class="bh-surface p-3 rounded" id="filterForm">
-            <h5 class="mb-3">Filters</h5>
-            
-            <!-- Search -->
-            <div class="mb-3">
-              <label for="search" class="form-label">Search</label>
+          <form method="get" class="bh-surface bh-filter-shell" id="filterForm">
+            <div class="bh-filter-head">
+              <div>
+                <div class="bh-kicker mb-2">Refine</div>
+                <h2 class="h5 mb-0">Filters</h2>
+              </div>
+              <span class="bh-mini-badge">{{ items_count }} visible</span>
+            </div>
+
+            <div class="bh-filter-group">
+              <label for="{{ filter_form.search.id_for_label }}" class="bh-filter-label">Search</label>
               {{ filter_form.search }}
             </div>
 
-            <!-- Price Range -->
-            <div class="mb-3">
-              <label class="form-label">Price Range</label>
-              <div class="row g-2">
-                <div class="col">
+            <div class="bh-filter-group">
+              <label class="bh-filter-label">Price range</label>
+              <div class="bh-filter-pair">
+                <div>
                   {{ filter_form.min_price }}
                 </div>
-                <div class="col">
+                <div>
                   {{ filter_form.max_price }}
                 </div>
               </div>
             </div>
 
-            <!-- Availability -->
-            <div class="mb-3">
+            <div class="bh-filter-check">
               {{ filter_form.available_only }}
-              <label for="available_only" class="form-check-label">Available only</label>
+              <label for="{{ filter_form.available_only.id_for_label }}" class="form-check-label">Only show items currently in stock</label>
             </div>
 
-            <!-- Sort -->
-            <div class="mb-3">
-              <label for="sort_by" class="form-label">Sort By</label>
+            <div class="bh-filter-group">
+              <label for="{{ filter_form.sort_by.id_for_label }}" class="bh-filter-label">Sort by</label>
               {{ filter_form.sort_by }}
             </div>
 
-            <button type="submit" class="btn btn-success w-100 mb-2">Apply Filters</button>
-            <a href="{% url 'items_public' %}" class="btn btn-outline-secondary w-100">Clear</a>
+            <div class="bh-filter-actions">
+              <button type="submit" class="btn btn-success w-100">Apply filters</button>
+              <a href="{% url 'items_public' %}" class="btn btn-outline-secondary w-100">Clear all</a>
+            </div>
           </form>
         </div>
 
-        <!-- Items Grid -->
         <div class="col-lg-9">
+          <div class="bh-results-toolbar" aria-label="Browse results summary">
+            <div class="bh-results-meta">
+              <div class="bh-results-count">{{ items_count }} product{{ items_count|pluralize }}</div>
+              <div class="bh-results-context">
+                {% if request.GET.search %}
+                  Search results for "{{ request.GET.search }}"
+                {% elif quick_filter == "budget" and marketplace_snapshot.average_price %}
+                  Budget-friendly picks at or below Ksh{{ marketplace_snapshot.average_price|floatformat:0 }}
+                {% elif quick_filter == "community" %}
+                  Listings from active sellers with broader storefronts
+                {% elif quick_filter == "fresh" %}
+                  Recently added products across the marketplace
+                {% elif available_only %}
+                  Showing only items that are currently available
+                {% else %}
+                  Browse the full marketplace and narrow it down as you go
+                {% endif %}
+              </div>
+            </div>
+            <div class="bh-results-actions">
+              {% if quick_filter or available_only or request.GET.search or request.GET.min_price or request.GET.max_price or request.GET.sort_by %}
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'items_public' %}">Reset view</a>
+              {% endif %}
+              <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">Catalog view</a>
+            </div>
+          </div>
+
           {% if items_cards %}
-            <div class="row g-3">
+            <div class="row g-4">
               {% for item in items_cards %}
-                <div class="col-12 col-sm-6 col-lg-4">
+                <div class="col-12 col-sm-6 col-xl-4">
                   <article class="card bh-product-card h-100">
                     {% if item.image_url %}
                       <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
@@ -127,7 +184,7 @@
             </div>
           {% else %}
             <div class="bh-empty-state">
-              <div class="bh-empty-state-icon">📦</div>
+              <div class="bh-empty-state-icon"><i class="bi bi-box-seam"></i></div>
               <h2 class="bh-empty-state-title">No items found</h2>
               <p class="bh-empty-state-description">Try adjusting your filters or search terms</p>
               <a href="{% url 'items_public' %}" class="btn btn-success">Clear filters</a>

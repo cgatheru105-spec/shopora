@@ -157,6 +157,10 @@ class ItemFilterForm(forms.Form):
             "step": "0.01"
         })
     )
+    available_only = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
     sort_by = forms.ChoiceField(
         required=False,
         choices=[

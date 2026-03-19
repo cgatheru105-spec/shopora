@@ -8,6 +8,7 @@
 
   let revealObserver = null;
   let royalClicks = [];
+  let lastCartCount = null;
 
   function getThemePreference() {
     const value = localStorage.getItem(STORAGE_KEYS.theme);
@@ -266,6 +267,18 @@
     }).format(value);
   }
 
+  function replayClassAnimation(nodes, className, duration = 700) {
+    nodes.forEach((node) => {
+      if (!node) return;
+      node.classList.remove(className);
+      void node.offsetWidth;
+      node.classList.add(className);
+      window.setTimeout(() => {
+        node.classList.remove(className);
+      }, duration);
+    });
+  }
+
   function normalizeCartId(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -331,6 +344,7 @@
     const cart = getCart();
     const count = cart.reduce((total, item) => total + item.quantity, 0);
     const subtotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    const shouldAnimateCartUpdate = lastCartCount !== null && lastCartCount !== count;
 
     document.querySelectorAll("[data-bh-cart-count]").forEach((badge) => {
       badge.textContent = count;
@@ -362,14 +376,14 @@
 
     const placeholder = itemsRoot.getAttribute("data-bh-cart-placeholder") || "";
     itemsRoot.innerHTML = cart
-      .map((item) => {
+      .map((item, index) => {
         const image = escapeHtml(item.image || placeholder);
         const name = escapeHtml(item.name);
         const seller = escapeHtml(item.seller);
         const url = item.url ? escapeHtml(item.url) : "";
 
         return `
-          <article class="bh-cart-item">
+          <article class="bh-cart-item" style="--bh-cart-item-delay: ${Math.min(index * 55, 220)}ms;">
             <img class="bh-cart-thumb" src="${image}" alt="${name}">
             <div class="bh-cart-copy">
               <div class="fw-semibold">${name}</div>
@@ -392,6 +406,20 @@
         `;
       })
       .join("");
+
+    if (shouldAnimateCartUpdate) {
+      replayClassAnimation(
+        [
+          ...document.querySelectorAll(".bh-cart-toggle"),
+          ...document.querySelectorAll("[data-bh-cart-count]"),
+          ...document.querySelectorAll("[data-bh-cart-items-label]"),
+          ...document.querySelectorAll("[data-bh-cart-subtotal]"),
+        ],
+        "is-bump"
+      );
+    }
+
+    lastCartCount = count;
   }
 
   function appendCheckoutInputs(form, cart) {
@@ -509,9 +537,17 @@
     toast.textContent = message;
     document.body.appendChild(toast);
 
+    window.requestAnimationFrame(() => {
+      toast.classList.add("is-entering");
+    });
+
+    window.setTimeout(() => {
+      toast.classList.add("is-hiding");
+    }, 2200);
+
     window.setTimeout(() => {
       toast.remove();
-    }, 2600);
+    }, 2800);
   }
 
   function initEasterEggs() {
@@ -547,16 +583,43 @@
 
     const elements = Array.from(
       document.querySelectorAll(
-        ".bh-hero, .bh-surface, .bh-product-card, .bh-category-card, .alert"
+        [
+          ".bh-hero",
+          ".bh-surface",
+          ".bh-results-toolbar",
+          ".bh-product-card",
+          ".bh-category-card",
+          ".bh-stat-card",
+          ".bh-spotlight-card",
+          ".bh-inline-item",
+          ".bh-quick-filter",
+          ".alert",
+          ".bh-footer-grid > *",
+        ].join(", ")
       )
-    );
+    ).filter((element, index, collection) => collection.indexOf(element) === index);
 
-    elements.forEach((el, index) => {
+    let previousParent = null;
+    let groupIndex = 0;
+
+    elements.forEach((el) => {
       if (!el.classList.contains("bh-reveal")) {
         el.classList.add("bh-reveal");
       }
-      const delay = Math.min(index * 35, 260);
+      groupIndex = el.parentElement === previousParent ? groupIndex + 1 : 0;
+      previousParent = el.parentElement;
+
+      const delay = Math.min(groupIndex * 55, 280);
+      const distance = el.matches(".bh-hero")
+        ? "26px"
+        : el.matches(".bh-product-card, .bh-category-card, .bh-spotlight-card, .bh-inline-item, .bh-stat-card")
+          ? "22px"
+          : "16px";
+      const duration = el.matches(".bh-hero") ? "760ms" : "620ms";
+
       el.style.setProperty("--bh-reveal-delay", `${delay}ms`);
+      el.style.setProperty("--bh-reveal-distance", distance);
+      el.style.setProperty("--bh-reveal-duration", duration);
     });
 
     if (!("IntersectionObserver" in window)) {

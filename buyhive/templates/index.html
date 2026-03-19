@@ -14,15 +14,16 @@
       <h1 id="home-hero-title" class="display-5 mb-2">Fresh groceries, every day</h1>
       <p class="lead mb-0">Healthy / Sustainable / Affordable</p>
 
-      <div class="bh-search">
+      <div class="bh-search bh-search-panel">
         <form action="{% url 'book' %}" method="get" class="input-group input-group-lg" role="search" aria-label="Search groceries">
           <input name="q" type="text" class="form-control" placeholder="Search groceries..." aria-label="Search groceries">
           <button type="submit" class="btn btn-success">Search</button>
         </form>
       </div>
 
-      <div class="mt-4">
+      <div class="bh-hero-actions">
         <a href="{% url 'book' %}" class="btn btn-light btn-lg px-4">Shop products</a>
+        <a href="{% url 'profiles_search' %}" class="btn btn-outline-light btn-lg px-4">Browse sellers</a>
       </div>
 
       <div class="bh-chip-row justify-content-center">
@@ -35,6 +36,13 @@
 
   <section class="bh-section-wrapper mb-4" id="marketplace-stats" aria-label="Marketplace statistics">
     <div class="bh-section-shell">
+      <div class="bh-page-intro bh-page-intro--compact">
+        <div>
+          <div class="bh-kicker">Market pulse</div>
+          <h2 class="bh-section-title h5 mb-0">A quick read on the marketplace</h2>
+        </div>
+        <div class="bh-section-caption">Live activity snapshot</div>
+      </div>
       <div class="bh-stat-grid">
         <div class="bh-stat-card">
           <div class="bh-stat-label">Live sellers</div>
@@ -55,136 +63,146 @@
   </section>
 
   <section class="bh-section-wrapper mb-5" id="shop-categories" aria-label="Shop by category">
-    <div class="bh-page-intro">
-      <div>
-        <div class="bh-kicker">Start here</div>
-        <h2 class="bh-section-title h4 mb-0">Shop by category</h2>
+    <div class="bh-section-shell bh-section-shell--showcase">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Start here</div>
+          <h2 class="bh-section-title h4 mb-0">Shop by category</h2>
+        </div>
+        <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">View all</a>
       </div>
-      <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">View all</a>
-    </div>
 
-    <div class="row g-3">
-      <div class="col-6 col-md-3">
-        <a href="{% url 'items_public' %}?search=fruits" class="bh-category-card text-decoration-none">
-          <img alt="Fruits" src="https://img.icons8.com/color/96/apple.png">
-          <div class="fw-semibold">Fruits</div>
-        </a>
-      </div>
-      <div class="col-6 col-md-3">
-        <a href="{% url 'items_public' %}?search=vegetables" class="bh-category-card text-decoration-none">
-          <img alt="Vegetables" src="https://img.icons8.com/color/96/broccoli.png">
-          <div class="fw-semibold">Vegetables</div>
-        </a>
-      </div>
-      <div class="col-6 col-md-3">
-        <a href="{% url 'items_public' %}?search=dairy" class="bh-category-card text-decoration-none">
-          <img alt="Dairy" src="https://img.icons8.com/color/96/milk-bottle.png">
-          <div class="fw-semibold">Dairy</div>
-        </a>
-      </div>
-      <div class="col-6 col-md-3">
-        <a href="{% url 'items_public' %}?search=grains" class="bh-category-card text-decoration-none">
-          <img alt="Grains" src="https://img.icons8.com/color/96/rice-bowl.png">
-          <div class="fw-semibold">Grains</div>
-        </a>
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <a href="{% url 'items_public' %}?search=fruits" class="bh-category-card text-decoration-none">
+            <img alt="Fruits" src="https://img.icons8.com/color/96/apple.png">
+            <div class="fw-semibold">Fruits</div>
+            <div class="bh-category-note">Bright picks for breakfast bowls and snacks.</div>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="{% url 'items_public' %}?search=vegetables" class="bh-category-card text-decoration-none">
+            <img alt="Vegetables" src="https://img.icons8.com/color/96/broccoli.png">
+            <div class="fw-semibold">Vegetables</div>
+            <div class="bh-category-note">Leafy greens and pantry staples for dinner prep.</div>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="{% url 'items_public' %}?search=dairy" class="bh-category-card text-decoration-none">
+            <img alt="Dairy" src="https://img.icons8.com/color/96/milk-bottle.png">
+            <div class="fw-semibold">Dairy</div>
+            <div class="bh-category-note">Daily essentials for tea, baking, and family meals.</div>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a href="{% url 'items_public' %}?search=grains" class="bh-category-card text-decoration-none">
+            <img alt="Grains" src="https://img.icons8.com/color/96/rice-bowl.png">
+            <div class="fw-semibold">Grains</div>
+            <div class="bh-category-note">Rice, flour, and filling favorites for practical carts.</div>
+          </a>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="bh-section-wrapper mb-5" id="popular-products" aria-label="Popular products">
-    <div class="bh-page-intro">
-      <div>
-        <div class="bh-kicker">Community favorites</div>
-        <h2 class="bh-section-title h4 mb-0">Popular products</h2>
-        <p>Fresh additions from active sellers in the marketplace.</p>
+    <div class="bh-section-shell bh-section-shell--showcase">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Community favorites</div>
+          <h2 class="bh-section-title h4 mb-0">Popular products</h2>
+          <p>Fresh additions from active sellers in the marketplace.</p>
+        </div>
+        <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">View all</a>
       </div>
-      <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">View all</a>
+
+      {% if popular_cards %}
+        <div class="row g-3">
+          {% for item in popular_cards %}
+            <div class="col-12 col-sm-6 col-lg-3">
+              <article class="card bh-product-card h-100">
+                {% if item.image_url %}
+                  <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
+                {% else %}
+                  <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+                {% endif %}
+
+                <div class="card-body">
+                  <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                  <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
+                  <div class="bh-card-meta mt-3">
+                    <span class="bh-mini-badge">Popular</span>
+                    <span class="bh-mini-badge">Fresh pick</span>
+                  </div>
+                  <div class="bh-price mt-2">Ksh{{ item.price }}</div>
+                </div>
+
+                <div class="card-footer bg-transparent border-0 bh-card-footer">
+                  <small class="text-muted">by {{ item.owner_username }}</small>
+                  <div class="bh-card-actions">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      data-bh-add-to-cart
+                      data-bh-cart-id="item-{{ item.id }}"
+                      data-bh-cart-name="{{ item.name }}"
+                      data-bh-cart-price="{{ item.price }}"
+                      data-bh-cart-seller="{{ item.owner_username }}"
+                      data-bh-cart-url="{{ item.owner_profile_url }}"
+                      data-bh-cart-image="{{ item.image_url }}"
+                    >Add to Cart</button>
+                    <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
+                  </div>
+                </div>
+              </article>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info bh-surface">No popular products available yet. Check back soon!</div>
+      {% endif %}
     </div>
-
-    {% if popular_cards %}
-      <div class="row g-3">
-        {% for item in popular_cards %}
-          <div class="col-12 col-sm-6 col-lg-3">
-            <article class="card bh-product-card h-100">
-              {% if item.image_url %}
-                <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
-              {% else %}
-                <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
-              {% endif %}
-
-              <div class="card-body">
-                <div class="fw-semibold bh-product-name">{{ item.name }}</div>
-                <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
-                <div class="bh-card-meta mt-3">
-                  <span class="bh-mini-badge">Popular</span>
-                  <span class="bh-mini-badge">Fresh pick</span>
-                </div>
-                <div class="bh-price mt-2">Ksh{{ item.price }}</div>
-              </div>
-
-              <div class="card-footer bg-transparent border-0 bh-card-footer">
-                <small class="text-muted">by {{ item.owner_username }}</small>
-                <div class="bh-card-actions">
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm"
-                    data-bh-add-to-cart
-                    data-bh-cart-id="item-{{ item.id }}"
-                    data-bh-cart-name="{{ item.name }}"
-                    data-bh-cart-price="{{ item.price }}"
-                    data-bh-cart-seller="{{ item.owner_username }}"
-                    data-bh-cart-url="{{ item.owner_profile_url }}"
-                    data-bh-cart-image="{{ item.image_url }}"
-                  >Add to Cart</button>
-                  <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
-                </div>
-              </div>
-            </article>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="alert alert-info bh-surface">No popular products available yet. Check back soon!</div>
-    {% endif %}
   </section>
 
   {% if spotlight_sellers %}
     <section class="bh-section-wrapper mb-5" id="seller-spotlights" aria-label="Seller spotlights">
-      <div class="bh-page-intro">
-        <div>
-          <div class="bh-kicker">Seller spotlights</div>
-          <h2 class="bh-section-title h4 mb-0">Browse the active storefronts</h2>
-          <p>Profiles with a deeper catalog so shoppers can compare more than one item at a time.</p>
+      <div class="bh-section-shell bh-section-shell--showcase">
+        <div class="bh-page-intro">
+          <div>
+            <div class="bh-kicker">Seller spotlights</div>
+            <h2 class="bh-section-title h4 mb-0">Browse the active storefronts</h2>
+            <p>Profiles with a deeper catalog so shoppers can compare more than one item at a time.</p>
+          </div>
+          <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}?account_type=seller&sort_by=items_count">See sellers</a>
         </div>
-        <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}?account_type=seller&sort_by=items_count">See sellers</a>
-      </div>
 
-      <div class="bh-spotlight-grid">
-        {% for seller in spotlight_sellers %}
-          <article class="bh-spotlight-card">
-            <div class="bh-spotlight-head">
-              <div class="bh-spotlight-avatar">
-                {% if seller.profile_picture_url %}
-                  <img src="{{ seller.profile_picture_url }}" alt="{{ seller.username }}">
+        <div class="bh-spotlight-grid">
+          {% for seller in spotlight_sellers %}
+            <article class="bh-spotlight-card">
+              <div class="bh-spotlight-head">
+                <div class="bh-spotlight-avatar">
+                  {% if seller.profile_picture_url %}
+                    <img src="{{ seller.profile_picture_url }}" alt="{{ seller.username }}">
+                  {% else %}
+                    <img src="{% static 'images/logo.png' %}" alt="{{ seller.username }}">
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="bh-spotlight-name">{{ seller.username }}</div>
+                  <div class="bh-spotlight-meta">{{ seller.profile_type }} · {{ seller.item_count }} listing{{ seller.item_count|pluralize }}</div>
+                </div>
+              </div>
+              <p class="bh-spotlight-copy">
+                {% if seller.is_founder %}
+                  Founder storefront with an established catalog and community presence.
                 {% else %}
-                  <img src="{% static 'images/logo.png' %}" alt="{{ seller.username }}">
+                  Active seller profile with multiple live listings ready to browse.
                 {% endif %}
-              </div>
-              <div>
-                <div class="bh-spotlight-name">{{ seller.username }}</div>
-                <div class="bh-spotlight-meta">{{ seller.profile_type }} · {{ seller.item_count }} listing{{ seller.item_count|pluralize }}</div>
-              </div>
-            </div>
-            <p class="bh-spotlight-copy">
-              {% if seller.is_founder %}
-                Founder storefront with an established catalog and community presence.
-              {% else %}
-                Active seller profile with multiple live listings ready to browse.
-              {% endif %}
-            </p>
-            <a class="btn btn-outline-success btn-sm" href="{{ seller.profile_url }}">View seller</a>
-          </article>
-        {% endfor %}
+              </p>
+              <a class="btn btn-outline-success btn-sm" href="{{ seller.profile_url }}">View seller</a>
+            </article>
+          {% endfor %}
+        </div>
       </div>
     </section>
   {% endif %}

@@ -156,11 +156,13 @@
   <footer class="bh-footer">
     <div class="container">
       <div class="bh-footer-grid">
-        <div>
-          <div class="fw-semibold text-dark-emphasis mb-2">EcoMart Shopora</div>
-          <div class="small">Clean shopping, clear profiles, and a marketplace that feels friendly to use.</div>
+        <div class="bh-footer-brand">
+          <div class="bh-kicker mb-2">Neighborhood commerce</div>
+          <div class="bh-footer-title text-dark-emphasis">EcoMart Shopora</div>
+          <div class="bh-footer-copy small">Clean shopping, clear profiles, and a marketplace that feels simple, trustworthy, and easy to explore.</div>
         </div>
         <nav class="bh-footer-links" aria-label="Footer">
+          <div class="bh-footer-heading">Explore</div>
           <a href="{% url 'items_public' %}">Browse Items</a>
           <a href="{% url 'profiles_search' %}">Search Profiles</a>
           <a href="{% url 'index' %}#founders">Founders</a>
@@ -171,7 +173,8 @@
           {% endif %}
         </nav>
         <div class="small bh-footer-note">
-          Psst. The little jewel in the logo likes rapid taps.
+          <div class="bh-footer-note-title">Small delight</div>
+          <div>Psst. The little jewel in the logo likes rapid taps.</div>
         </div>
       </div>
     </div>
