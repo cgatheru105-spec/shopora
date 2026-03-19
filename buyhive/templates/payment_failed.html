@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Failed - EcoMart Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="bh-surface p-5 rounded text-center">
+            <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+            <h2 class="mb-3 text-danger">Payment Initiation Failed</h2>
+            <p class="lead text-muted mb-4">
+              We couldn't initiate your MPESA payment request.
+            </p>
+
+            <div class="alert alert-danger mb-4">
+              <h6 class="alert-heading">What might have gone wrong:</h6>
+              {% if payment.result_description %}
+                <p class="small mb-3">{{ payment.result_description }}</p>
+              {% endif %}
+              <ul class="mb-0 text-start small">
+                <li>Invalid phone number format</li>
+                <li>Network connection issues</li>
+                <li>MPESA service temporarily unavailable</li>
+                <li>Your phone number is not registered for MPESA</li>
+              </ul>
+            </div>
+
+            <div class="mb-4 p-3 bh-surface-soft rounded">
+              <h6 class="mb-2">Order Details</h6>
+              <div class="text-start">
+                <div><strong>Order ID:</strong> <code>{{ order.order_id }}</code></div>
+                <div><strong>Amount:</strong> <strong class="text-danger">KES {{ order.total_amount }}</strong></div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <a href="{% url 'initiate_payment' order.order_id %}" class="btn btn-danger">Try Again</a>
+              <a href="{% url 'order_detail' order.order_id %}" class="btn btn-outline-secondary">View Order</a>
+              <a href="{% url 'items_public' %}" class="btn btn-outline-secondary">Continue Shopping</a>
+            </div>
+
+            <div class="alert alert-info mt-4 small">
+              <strong>Having trouble?</strong> Contact our support team or try using a different phone number registered with MPESA.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

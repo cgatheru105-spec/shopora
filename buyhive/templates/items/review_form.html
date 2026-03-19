@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review: {{ item.name }} - Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="mb-4">
+        <h1 class="bh-section-title h3">{% if is_update %}Update{% else %}Review{% endif %} "{{ item.name }}"</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <form method="post" class="bh-form">
+            {% csrf_token %}
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Your Rating</label>
+              <div class="bh-rating-input">
+                {% for value, label in form.rating.field.choices %}
+                  <div class="form-check mb-2">
+                    <input type="radio" class="form-check-input" id="rating_{{ value }}" 
+                           name="rating" value="{{ value }}" 
+                           {% if form.rating.value == value|stringformat:"s" %}checked{% endif %}>
+                    <label class="form-check-label" for="rating_{{ value }}">
+                      <span class="bh-rating-star">★ {{ value }}/5</span> - {{ label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+              {% if form.rating.errors %}
+                <div class="alert alert-danger mt-2">{{ form.rating.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">Review Title (optional)</label>
+              {{ form.title }}
+              {% if form.title.errors %}
+                <div class="alert alert-danger mt-2">{{ form.title.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label for="{{ form.review_text.id_for_label }}" class="form-label fw-semibold">Your Review (optional)</label>
+              {{ form.review_text }}
+              {% if form.review_text.errors %}
+                <div class="alert alert-danger mt-2">{{ form.review_text.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success">{% if is_update %}Update{% else %}Submit{% endif %} Review</button>
+              <a href="{% url 'items_public' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="col-md-4">
+          <div class="bh-surface p-3 rounded">
+            <h5 class="mb-3">About this item</h5>
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.name }}" class="img-fluid rounded mb-3">
+            {% endif %}
+            <div class="mb-2">
+              <strong>{{ item.name }}</strong>
+            </div>
+            <div class="text-muted small mb-3">{{ item.description }}</div>
+            <div class="mb-3">
+              <div class="h5">Ksh{{ item.price }}</div>
+              <small class="text-muted">by <a href="{{ item.owner_profile_url }}">{{ item.owner_username }}</a></small>
+            </div>
+            {% if item.total_reviews > 0 %}
+              <div class="border-top pt-3 mt-3">
+                <small class="text-muted">
+                  <strong class="text-dark">{{ item.total_reviews }}</strong> review{{ item.total_reviews|pluralize }}
+                </small>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

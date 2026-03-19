@@ -69,7 +69,7 @@
       <article class="bh-snapshot-card">
         <div class="bh-snapshot-label">Average price</div>
         <div class="bh-snapshot-value">
-          {% if marketplace_snapshot.average_price %}${{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+          {% if marketplace_snapshot.average_price %}Ksh{{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
         </div>
         <div class="bh-snapshot-note">Use it as a guide while you compare</div>
       </article>
@@ -105,7 +105,7 @@
                 <div class="bh-card-meta mt-3">
                   <span class="bh-mini-badge">Just added</span>
                 </div>
-                <div class="bh-price mt-2">${{ item.price }}</div>
+                <div class="bh-price mt-2">Ksh{{ item.price }}</div>
               </div>
               <div class="card-footer bg-transparent border-0 bh-card-footer">
                 <div class="small text-muted">by {{ item.owner_username }}</div>
@@ -120,7 +120,7 @@
                     data-bh-cart-seller="{{ item.owner_username }}"
                     data-bh-cart-url="{{ item.owner_profile_url }}"
                     data-bh-cart-image="{{ item.image_url }}"
-                  >Cart</button>
+                  >Add to Cart</button>
                   <a class="btn btn-outline-success btn-sm" href="{{ item.owner_profile_url }}">Seller</a>
                 </div>
               </div>
@@ -161,7 +161,7 @@
                   <p>{{ item.description|truncatechars:72 }}</p>
                 </div>
                 <div class="bh-inline-item-actions">
-                  <div class="bh-price">${{ item.price }}</div>
+                  <div class="bh-price">Ksh{{ item.price }}</div>
                   <button
                     type="button"
                     class="btn btn-outline-secondary btn-sm"

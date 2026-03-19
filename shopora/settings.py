@@ -123,3 +123,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'login'
+
+# MPESA/Daraja Configuration
+MPESA_ENVIRONMENT = 'sandbox'  # 'production' or 'sandbox'
+MPESA_CONSUMER_KEY = 'dxD2MGyUL0qLtYLkikrN1Gqko2NPGcU6KGJLGXkk4Vmx9G0C'
+MPESA_CONSUMER_SECRET = 'AYl37HUkSu8ssBbWiJh2jVexCAlGeN7bGhm36TBAYxRpPMW69nVLtCF9rej8hGZU'
+MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+MPESA_BUSINESS_SHORTCODE = '174379'  # Sandbox shortcode
+MPESA_CALLBACK_URL = 'https://trepidly-unobstinate-alivia.ngrok-free.dev/api/mpesa/callback/'

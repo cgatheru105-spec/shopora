@@ -1,0 +1,217 @@
+/* Rating Stars */
+.bh-rating {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--bh-muted);
+}
+
+.bh-rating-star {
+  color: #ffc107;
+  font-size: 16px;
+}
+
+.bh-rating-empty {
+  color: #e8e8e8;
+}
+
+.bh-rating-badge {
+  background: var(--bh-accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Wishlist Button */
+.bh-wishlist-btn {
+  background: none;
+  border: 1px solid var(--bh-border);
+  color: var(--bh-muted);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bh-wishlist-btn:hover {
+  border-color: var(--bh-accent);
+  color: var(--bh-accent);
+  background: var(--bh-icon-success-bg);
+}
+
+.bh-wishlist-btn.active {
+  background: var(--bh-accent);
+  color: white;
+  border-color: var(--bh-accent);
+}
+
+.bh-wishlist-btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bh-wishlist-icon::before {
+  content: "♡";
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.bh-wishlist-btn.active .bh-wishlist-icon::before {
+  content: "♥";
+}
+
+/* Status Badge */
+.bh-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bh-status-available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.bh-status-unavailable {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Review Section */
+.bh-reviews-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--bh-border);
+}
+
+.bh-review-item {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bh-surface-soft);
+  border-radius: 12px;
+}
+
+.bh-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.bh-review-author {
+  font-weight: 600;
+  color: var(--bh-text);
+}
+
+.bh-review-date {
+  font-size: 12px;
+  color: var(--bh-muted);
+}
+
+.bh-review-rating {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.bh-review-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bh-text);
+}
+
+/* Seller Rating */
+.bh-seller-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bh-surface-soft);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.bh-seller-rating-value {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--bh-accent);
+}
+
+.bh-seller-rating-count {
+  font-size: 12px;
+  color: var(--bh-muted);
+}
+
+/* Product Card Enhancements */
+.bh-product-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.bh-product-card .card-body {
+  position: relative;
+}
+
+.bh-product-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-top: 4px;
+  color: var(--bh-muted);
+}
+
+.bh-product-rating-stars {
+  color: #ffc107;
+}
+
+/* Wishlist Page */
+.bh-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--bh-surface-soft);
+  border-radius: 18px;
+}
+
+.bh-empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.bh-empty-state-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--bh-text);
+}
+
+.bh-empty-state-description {
+  color: var(--bh-muted);
+  margin-bottom: 24px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .bh-wishlist-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .bh-rating {
+    font-size: 12px;
+  }
+
+  .bh-rating-star {
+    font-size: 14px;
+  }
+}

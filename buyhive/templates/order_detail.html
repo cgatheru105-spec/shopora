@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order {{ order.order_id }} - EcoMart Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="mb-4">
+        <a href="{% url 'orders_list' %}" class="btn btn-outline-secondary btn-sm">&larr; Back to Orders</a>
+      </div>
+
+      <div class="row g-4">
+        <!-- Order Details -->
+        <div class="col-lg-8">
+          <div class="bh-surface p-4 rounded mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4>Order {{ order.order_id }}</h4>
+              {% if order.status == 'paid' %}
+                <span class="badge bg-success fs-6">✓ Paid</span>
+              {% elif order.status == 'payment_initiated' %}
+                <span class="badge bg-warning fs-6">⏳ Pending Payment</span>
+              {% elif order.status == 'completed' %}
+                <span class="badge bg-info fs-6">📦 Completed</span>
+              {% elif order.status == 'failed' %}
+                <span class="badge bg-danger fs-6">✗ Failed</span>
+              {% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <small class="text-muted">Order Date</small>
+                <div>{{ order.created_at|date:"M d, Y H:i" }}</div>
+              </div>
+              <div class="col-md-6">
+                <small class="text-muted">Paid Date</small>
+                <div>{{ order.paid_at|date:"M d, Y H:i"|default:"Pending" }}</div>
+              </div>
+            </div>
+
+            <div class="border-top pt-3">
+              <h6 class="mb-3">Delivery Information</h6>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <small class="text-muted">Recipient Name</small>
+                  <div>{{ order.buyer_name }}</div>
+                </div>
+                <div class="col-md-6">
+                  <small class="text-muted">Email</small>
+                  <div>{{ order.buyer_email }}</div>
+                </div>
+                <div class="col-md-6">
+                  <small class="text-muted">Phone</small>
+                  <div>{{ order.phone_number }}</div>
+                </div>
+                <div class="col-md-6">
+                  <small class="text-muted">Delivery Address</small>
+                  <div>{{ order.delivery_address|linebreaks }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Items -->
+          <div class="bh-surface p-4 rounded">
+            <h5 class="mb-3">Order Items</h5>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr class="table-light">
+                    <th>Item</th>
+                    <th>Seller</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in order_items %}
+                    <tr>
+                      <td>
+                        <strong>{{ item.item.name }}</strong>
+                        <br>
+                        <small class="text-muted">{{ item.item.description|truncatechars:60 }}</small>
+                      </td>
+                      <td>
+                        <a href="{% url 'profile_public' item.seller.username %}">{{ item.seller.username }}</a>
+                      </td>
+                      <td>{{ item.quantity }}</td>
+                      <td>KES {{ item.price }}</td>
+                      <td><strong>KES {{ item.subtotal }}</strong></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <th colspan="4" class="text-end">Total Amount:</th>
+                    <th><strong class="h5">KES {{ order.total_amount }}</strong></th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+          <!-- Payment Status -->
+          {% if order.payment %}
+            <div class="bh-surface p-4 rounded mb-4">
+              <h6 class="mb-3">Payment Details</h6>
+              
+              {% if order.payment.status == 'completed' %}
+                <div class="alert alert-success mb-3">
+                  <strong>✓ Payment Received</strong>
+                </div>
+                <div class="mb-2">
+                  <small class="text-muted">MPESA Receipt</small>
+                  <div class="font-monospace small">{{ order.payment.mpesa_receipt }}</div>
+                </div>
+              {% elif order.payment.status == 'initiated' %}
+                <div class="alert alert-warning mb-3">
+                  <strong>⏳ Payment Awaiting</strong>
+                </div>
+                <div class="mb-2">
+                  <small class="text-muted">Status</small>
+                  <div>Checking MPESA...</div>
+                </div>
+                <a href="{% url 'payment_status' order.order_id %}" class="btn btn-sm btn-warning w-100">Check Status</a>
+              {% elif order.payment.status == 'failed' %}
+                <div class="alert alert-danger mb-3">
+                  <strong>✗ Payment Failed</strong>
+                </div>
+                <div class="mb-2">
+                  <small class="text-muted">Reason</small>
+                  <div class="small">{{ order.payment.result_description }}</div>
+                </div>
+                <a href="{% url 'initiate_payment' order.order_id %}" class="btn btn-sm btn-danger w-100">Retry Payment</a>
+              {% else %}
+                <div class="alert alert-info mb-3">
+                  <strong>Payment Pending</strong>
+                </div>
+              {% endif %}
+
+              <div class="mt-3">
+                <small class="text-muted">Amount</small>
+                <div class="fs-5"><strong>KES {{ order.payment.amount }}</strong></div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Order Summary -->
+          <div class="bh-surface p-4 rounded">
+            <h6 class="mb-3">Order Summary</h6>
+            <div class="mb-2">
+              <div class="d-flex justify-content-between">
+                <span>Subtotal</span>
+                <span>KES {{ order.total_amount }}</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between">
+                <span>Delivery</span>
+                <span class="text-success">Free</span>
+              </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between">
+              <strong>Total</strong>
+              <strong class="fs-5">KES {{ order.total_amount }}</strong>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="mt-4">
+            {% if order.status == 'payment_initiated' %}
+              <a href="{% url 'payment_status' order.order_id %}" class="btn btn-primary w-100 mb-2">Check Payment Status</a>
+            {% endif %}
+            <a href="{% url 'items_public' %}" class="btn btn-outline-secondary w-100">Continue Shopping</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

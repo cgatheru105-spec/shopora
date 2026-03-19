@@ -266,31 +266,59 @@
     }).format(value);
   }
 
+  function normalizeCartId(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    const normalized = raw.startsWith("item-") ? raw.slice(5) : raw;
+    return /^\d+$/.test(normalized) ? normalized : "";
+  }
+
+  function normalizeCartItem(item) {
+    if (!item || typeof item !== "object") return null;
+
+    const id = normalizeCartId(item.id || item.key);
+    const name = String(item.name || "").trim();
+    if (!id || !name) return null;
+
+    return {
+      id,
+      name,
+      price: Number.parseFloat(item.price) || 0,
+      seller: String(item.seller || "Marketplace seller"),
+      url: String(item.url || item.sellerUrl || ""),
+      image: String(item.image || ""),
+      quantity: Math.max(1, Number.parseInt(item.quantity, 10) || 1),
+    };
+  }
+
+  function normalizeCartItems(items) {
+    if (!Array.isArray(items)) return [];
+    return items
+      .map((item) => normalizeCartItem(item))
+      .filter(Boolean);
+  }
+
   function getCart() {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.cart);
       const parsed = JSON.parse(raw || "[]");
-      if (!Array.isArray(parsed)) return [];
+      const normalized = normalizeCartItems(parsed);
 
-      return parsed
-        .filter((item) => item && item.key && item.name)
-        .map((item) => ({
-          key: String(item.key),
-          name: String(item.name),
-          price: Number.parseFloat(item.price) || 0,
-          seller: String(item.seller || "Marketplace seller"),
-          url: String(item.url || ""),
-          image: String(item.image || ""),
-          quantity: Math.max(1, Number.parseInt(item.quantity, 10) || 1),
-        }));
+      if (JSON.stringify(normalized) !== JSON.stringify(parsed)) {
+        localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(normalized));
+      }
+
+      return normalized;
     } catch (error) {
       return [];
     }
   }
 
   function saveCart(cart) {
+    const normalizedCart = normalizeCartItems(cart);
+
     try {
-      localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart));
+      localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(normalizedCart));
     } catch (error) {
       showRoyalToast("Cart storage is unavailable on this device.");
       return false;
@@ -358,7 +386,7 @@
                   ? `<a class="btn btn-sm btn-outline-success" href="${url}" data-bs-dismiss="offcanvas">Seller</a>`
                   : ""
               }
-              <button type="button" class="btn btn-sm btn-outline-secondary" data-bh-cart-remove="${escapeHtml(item.key)}">Remove</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-bh-cart-remove="${escapeHtml(item.id)}">Remove</button>
             </div>
           </article>
         `;
@@ -366,10 +394,25 @@
       .join("");
   }
 
+  function appendCheckoutInputs(form, cart) {
+    form.querySelectorAll('[data-bh-generated-cart-input="true"]').forEach((field) => {
+      field.remove();
+    });
+
+    cart.forEach((item) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = `cart_${item.id}`;
+      input.value = item.quantity;
+      input.setAttribute("data-bh-generated-cart-input", "true");
+      form.appendChild(input);
+    });
+  }
+
   function addToCart(button, openCart) {
-    const key = button.getAttribute("data-bh-cart-id");
+    const id = normalizeCartId(button.getAttribute("data-bh-cart-id"));
     const name = button.getAttribute("data-bh-cart-name");
-    if (!key || !name) return;
+    if (!id || !name) return;
 
     const price = Number.parseFloat(button.getAttribute("data-bh-cart-price") || "0") || 0;
     const seller = button.getAttribute("data-bh-cart-seller") || "Marketplace seller";
@@ -377,11 +420,11 @@
     const image = button.getAttribute("data-bh-cart-image") || "";
 
     const cart = getCart();
-    const existing = cart.find((item) => item.key === key);
+    const existing = cart.find((item) => item.id === id);
     if (existing) {
       existing.quantity += 1;
     } else {
-      cart.unshift({ key, name, price, seller, url, image, quantity: 1 });
+      cart.unshift({ id, name, price, seller, url, image, quantity: 1 });
     }
 
     if (!saveCart(cart)) return;
@@ -395,17 +438,23 @@
     }
   }
 
-  function removeFromCart(key) {
-    if (!saveCart(getCart().filter((item) => item.key !== key))) return;
+  function removeFromCart(id) {
+    if (!saveCart(getCart().filter((item) => item.id !== id))) return;
     showRoyalToast("Item removed from your cart.");
   }
 
-  function clearCart() {
+  function clearCart(silent = false) {
     if (!saveCart([])) return;
-    showRoyalToast("Saved cart cleared.");
+    if (!silent) {
+      showRoyalToast("Saved cart cleared.");
+    }
   }
 
   function initCart() {
+    if (document.body.dataset.bhClearCartOnLoad === "true") {
+      clearCart(true);
+    }
+
     renderCart();
 
     document.addEventListener("click", (event) => {
@@ -431,6 +480,19 @@
         event.preventDefault();
         clearCart();
       }
+    });
+
+    document.querySelectorAll("[data-bh-checkout-form]").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        const cart = getCart();
+        if (!cart.length) {
+          event.preventDefault();
+          showRoyalToast("Your cart is empty.");
+          return;
+        }
+
+        appendCheckoutInputs(form, cart);
+      });
     });
 
     window.addEventListener("storage", (event) => {

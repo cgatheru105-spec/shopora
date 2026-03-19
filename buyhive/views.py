@@ -1,15 +1,33 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db import models
-from django.http import Http404
+from django.db import models, transaction
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+import uuid
+import json
+import logging
 
 from .constants import FOUNDER_USERNAMES, FOUNDER_USERNAMES_BY_KEY
-from .forms import ItemFilterForm, ItemForm, LoginForm, ProfilePictureForm, RegisterForm
-from .models import Item, ItemImage, Profile
+from .forms import (
+    AvailabilityFilterForm, CheckoutForm, ItemFilterForm, ItemForm, ItemReviewForm,
+    LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm
+)
+from .models import (
+    Item, ItemImage, ItemReview, Profile, RecentlyViewed, SellerRating, Wishlist,
+    Order, OrderItem, Payment, PaymentLog
+)
+from .mpesa_utils import MPESAConfigurationError, create_mpesa_client
+
+logger = logging.getLogger(__name__)
+
+CHECKOUT_SESSION_KEY = "checkout_cart"
+CLEAR_BROWSER_CART_SESSION_KEY = "clear_browser_cart_on_next_page"
 
 
 def _active_seller_ids(limit=6, minimum_items=2):
@@ -40,7 +58,7 @@ def _first_item_image_url(item):
     return first_image.image.url if first_image else ""
 
 
-def _serialize_item_card(item, include_owner=False):
+def _serialize_item_card(item, include_owner=False, user=None):
     card = {
         "id": item.id,
         "name": item.name,
@@ -48,10 +66,18 @@ def _serialize_item_card(item, include_owner=False):
         "price": item.price,
         "created_at": item.created_at,
         "image_url": _first_item_image_url(item),
+        "is_available": item.is_available,
+        "average_rating": item.average_rating,
+        "total_reviews": item.total_reviews,
+        "wishlist_count": item.wishlist_count,
+        "is_wishlisted": False,
     }
+    if user and user.is_authenticated:
+        card["is_wishlisted"] = Wishlist.objects.filter(user=user, item=item).exists()
     if include_owner:
         card["owner_username"] = item.owner.username
         card["owner_profile_url"] = reverse("profile_public", args=[item.owner.username])
+        card["seller_rating"] = item.owner.profile.average_seller_rating if hasattr(item.owner, 'profile') else 0
     return card
 
 
@@ -162,17 +188,17 @@ def index(request):
         .order_by("-created_at")[:8]
     )
     popular_cards = [
-        _serialize_item_card(item, include_owner=True) for item in popular_items
+        _serialize_item_card(item, include_owner=True, user=request.user) for item in popular_items
     ]
 
     fresh_cards = [
-        _serialize_item_card(item, include_owner=True)
+        _serialize_item_card(item, include_owner=True, user=request.user)
         for item in Item.objects.select_related("owner")
         .prefetch_related("images")
         .order_by("-created_at")[:4]
     ]
     budget_cards = [
-        _serialize_item_card(item, include_owner=True)
+        _serialize_item_card(item, include_owner=True, user=request.user)
         for item in Item.objects.select_related("owner")
         .prefetch_related("images")
         .order_by("price", "-created_at")[:4]
@@ -202,7 +228,13 @@ def Buy_products(request):
         items = items.filter(
             models.Q(name__icontains=q) | models.Q(description__icontains=q)
         )
-    return render(request, "book.html", {"items": items, "q": q})
+    
+    # Filter by availability if requested
+    available_only = request.GET.get("available_only") == "on"
+    if available_only:
+        items = items.filter(is_available=True)
+    
+    return render(request, "book.html", {"items": items, "q": q, "available_only": available_only})
 
 def login_user(request):
     if request.user.is_authenticated:
@@ -236,7 +268,12 @@ def register_user(request):
     form = RegisterForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
-        Profile.objects.create(user=user, account_type=form.cleaned_data["account_type"])
+        Profile.objects.create(
+            user=user, 
+            account_type=form.cleaned_data["account_type"],
+            phone_number=form.cleaned_data.get("phone_number"),
+            delivery_address=form.cleaned_data.get("delivery_address")
+        )
         login(request, user)
         return redirect("dashboard")
 
@@ -280,13 +317,13 @@ def dashboard(request):
         })
 
     buyer_cards = [
-        _serialize_item_card(item, include_owner=True)
+        _serialize_item_card(item, include_owner=True, user=request.user)
         for item in Item.objects.select_related("owner")
         .prefetch_related("images")
         .order_by("-created_at")[:3]
     ]
     budget_cards = [
-        _serialize_item_card(item, include_owner=True)
+        _serialize_item_card(item, include_owner=True, user=request.user)
         for item in Item.objects.select_related("owner")
         .prefetch_related("images")
         .order_by("price", "-created_at")[:3]
@@ -375,15 +412,24 @@ def items_public_list(request):
         items = items.filter(owner__in=_active_seller_ids(limit=12, minimum_items=2))
     elif quick_filter == "fresh":
         items = items.order_by("-created_at")
+    
+    # Filter by availability if requested
+    available_only = request.GET.get("available_only") == "on"
+    if available_only:
+        items = items.filter(is_available=True)
 
     items_count = items.count()
+    items_list = list(items)
+    items_cards = [_serialize_item_card(item, include_owner=True, user=request.user) for item in items_list]
 
     return render(request, "items/public_list.html", {
         "items": items,
+        "items_cards": items_cards,
         "filter_form": form,
         "quick_filter": quick_filter,
         "items_count": items_count,
         "marketplace_snapshot": marketplace_snapshot,
+        "available_only": available_only,
     })
 
 def profiles_search(request):
@@ -538,6 +584,7 @@ def seller_item_update(request, pk: int):
 
 
 @login_required
+@login_required
 def seller_item_delete(request, pk: int):
     if not _seller_required(request):
         raise Http404()
@@ -547,3 +594,604 @@ def seller_item_delete(request, pk: int):
         messages.success(request, "Item deleted.")
         return redirect("seller_items")
     return render(request, "seller/item_confirm_delete.html", {"item": item})
+
+
+# Wishlist views
+@login_required
+@require_http_methods(["POST"])
+def toggle_wishlist(request, pk: int):
+    """Toggle item in wishlist (AJAX endpoint)"""
+    item = get_object_or_404(Item, pk=pk)
+    wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, item=item)
+    
+    if not created:
+        wishlist_item.delete()
+        is_wishlisted = False
+    else:
+        is_wishlisted = True
+    
+    return JsonResponse({
+        "success": True,
+        "is_wishlisted": is_wishlisted,
+        "wishlist_count": item.wishlist_count
+    })
+
+
+@login_required
+def wishlist_view(request):
+    """Show user's wishlist"""
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related("item").order_by("-added_at")
+    items = [w.item for w in wishlist_items]
+    items_cards = [_serialize_item_card(item, include_owner=True, user=request.user) for item in items]
+    
+    return render(request, "buyer/wishlist.html", {
+        "items": items,
+        "items_cards": items_cards,
+        "wishlist_count": len(items),
+    })
+
+
+# Review views
+@login_required
+def item_review_create(request, item_id: int):
+    """Create or update a review for an item"""
+    item = get_object_or_404(Item, pk=item_id)
+    review, created = ItemReview.objects.get_or_create(item=item, reviewer=request.user)
+    
+    form = ItemReviewForm(request.POST or None, instance=review)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Review submitted successfully!" if created else "Review updated!")
+        return redirect("item_detail", pk=item_id)
+    
+    return render(request, "items/review_form.html", {
+        "form": form,
+        "item": item,
+        "is_update": not created,
+    })
+
+
+# Seller rating views
+@login_required
+def seller_rating_create(request, seller_username: str):
+    """Create or update a rating for a seller"""
+    User = get_user_model()
+    seller = get_object_or_404(User, username__iexact=seller_username)
+    
+    # Prevent self-rating
+    if request.user == seller:
+        messages.error(request, "You cannot rate yourself.")
+        return redirect("profile_public", username=seller.username)
+    
+    rating, created = SellerRating.objects.get_or_create(seller=seller, rater=request.user)
+    
+    form = SellerRatingForm(request.POST or None, instance=rating)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Seller rating submitted successfully!" if created else "Rating updated!")
+        return redirect("profile_public", username=seller.username)
+    
+    return render(request, "profiles/rating_form.html", {
+        "form": form,
+        "seller": seller,
+        "is_update": not created,
+    })
+
+
+# Recently viewed tracking
+@login_required
+@require_http_methods(["POST"])
+def track_item_view(request, item_id: int):
+    """Track when a user views an item"""
+    item = get_object_or_404(Item, pk=item_id)
+    RecentlyViewed.objects.update_or_create(user=request.user, item=item)
+    return JsonResponse({"success": True})
+
+
+@login_required
+def recently_viewed_items(request):
+    """Show user's recently viewed items"""
+    recently_viewed = RecentlyViewed.objects.filter(user=request.user).select_related("item").order_by("-viewed_at")[:20]
+    items = [rv.item for rv in recently_viewed]
+    items_cards = [_serialize_item_card(item, include_owner=True, user=request.user) for item in items]
+    
+    return render(request, "buyer/recently_viewed.html", {
+        "items": items,
+        "items_cards": items_cards,
+        "count": len(items),
+    })
+
+
+def _normalize_cart_item_id(raw_item_id):
+    item_id = str(raw_item_id or "").strip()
+    if item_id.startswith("item-"):
+        item_id = item_id[5:]
+    return item_id if item_id.isdigit() else ""
+
+
+def _parse_checkout_cart(data):
+    cart = {}
+    invalid_entries = 0
+
+    for key, value in data.items():
+        if not key.startswith("cart_"):
+            continue
+
+        item_id = _normalize_cart_item_id(key[5:])
+        if not item_id:
+            invalid_entries += 1
+            continue
+
+        try:
+            quantity = int(value)
+        except (TypeError, ValueError):
+            invalid_entries += 1
+            continue
+
+        if quantity < 1:
+            invalid_entries += 1
+            continue
+
+        cart[item_id] = quantity
+
+    return cart, invalid_entries
+
+
+def _get_checkout_cart_from_session(request):
+    raw_cart = request.session.get(CHECKOUT_SESSION_KEY, {})
+    if not isinstance(raw_cart, dict):
+        return {}
+
+    normalized_cart = {}
+    for item_id, quantity in raw_cart.items():
+        normalized_id = _normalize_cart_item_id(item_id)
+        try:
+            parsed_quantity = int(quantity)
+        except (TypeError, ValueError):
+            continue
+
+        if normalized_id and parsed_quantity > 0:
+            normalized_cart[normalized_id] = parsed_quantity
+
+    if normalized_cart != raw_cart:
+        request.session[CHECKOUT_SESSION_KEY] = normalized_cart
+        request.session.modified = True
+
+    return normalized_cart
+
+
+def _set_checkout_cart(request, cart):
+    request.session[CHECKOUT_SESSION_KEY] = cart
+    request.session.modified = True
+
+
+def _clear_checkout_cart(request):
+    if CHECKOUT_SESSION_KEY in request.session:
+        del request.session[CHECKOUT_SESSION_KEY]
+        request.session.modified = True
+
+
+def _flag_browser_cart_clear(request):
+    request.session[CLEAR_BROWSER_CART_SESSION_KEY] = True
+    request.session.modified = True
+
+
+def _consume_browser_cart_clear_flag(request):
+    should_clear = bool(request.session.pop(CLEAR_BROWSER_CART_SESSION_KEY, False))
+    if should_clear:
+        request.session.modified = True
+    return should_clear
+
+
+def _resolve_checkout_cart(cart):
+    normalized_ids = [int(item_id) for item_id in cart.keys() if item_id.isdigit()]
+    items_by_id = Item.objects.select_related("owner").in_bulk(normalized_ids)
+
+    valid_cart = {}
+    cart_items = []
+    total_amount = 0
+    unavailable_count = 0
+    missing_count = 0
+
+    for item_id, quantity in cart.items():
+        item = items_by_id.get(int(item_id))
+        if item is None:
+            missing_count += 1
+            continue
+        if not item.is_available:
+            unavailable_count += 1
+            continue
+
+        subtotal = item.price * quantity
+        total_amount += subtotal
+        valid_cart[item_id] = quantity
+        cart_items.append(
+            {
+                "item": item,
+                "quantity": quantity,
+                "subtotal": subtotal,
+            }
+        )
+
+    return {
+        "cart": valid_cart,
+        "cart_items": cart_items,
+        "total_amount": total_amount,
+        "missing_count": missing_count,
+        "unavailable_count": unavailable_count,
+    }
+
+
+def _checkout_prefill_initial_data(user):
+    initial_data = {
+        "buyer_name": user.get_full_name() or user.username,
+        "buyer_email": user.email,
+    }
+    profile = getattr(user, "profile", None)
+    if profile:
+        if profile.phone_number:
+            initial_data["phone_number"] = profile.phone_number
+        if profile.delivery_address:
+            initial_data["delivery_address"] = profile.delivery_address
+    return {key: value for key, value in initial_data.items() if value}
+
+
+def _payment_status_payload(order, payment):
+    return {
+        "order_id": order.order_id,
+        "order_status": order.status,
+        "order_status_label": order.get_status_display(),
+        "payment_status": payment.status,
+        "payment_status_label": payment.get_status_display(),
+        "is_paid": order.status in {"paid", "completed"} or payment.status == "completed",
+        "is_terminal": order.status in {"paid", "completed", "failed", "cancelled"},
+        "result_description": payment.result_description,
+        "status_url": reverse("payment_status", args=[order.order_id]),
+        "order_url": reverse("order_detail", args=[order.order_id]),
+    }
+
+
+# Checkout and Payment Views
+@login_required
+def checkout(request):
+    """Review or submit a checkout sourced from the browser cart."""
+    action = request.POST.get("checkout_action")
+    if request.method == "POST" and action == "review":
+        cart, invalid_entries = _parse_checkout_cart(request.POST)
+        if invalid_entries:
+            messages.warning(request, "Some cart entries were ignored because their quantities were invalid.")
+
+        resolved_cart = _resolve_checkout_cart(cart)
+        if resolved_cart["missing_count"] or resolved_cart["unavailable_count"]:
+            messages.warning(request, "Some cart items were removed because they are missing or no longer available.")
+
+        if not resolved_cart["cart_items"]:
+            _clear_checkout_cart(request)
+            messages.warning(request, "Your cart is empty.")
+            return redirect("items_public")
+
+        _set_checkout_cart(request, resolved_cart["cart"])
+        return redirect("checkout")
+
+    session_cart = _get_checkout_cart_from_session(request)
+    if not session_cart:
+        messages.warning(request, "Your cart is empty.")
+        return redirect("items_public")
+
+    resolved_cart = _resolve_checkout_cart(session_cart)
+    if resolved_cart["missing_count"] or resolved_cart["unavailable_count"]:
+        if resolved_cart["cart"]:
+            _set_checkout_cart(request, resolved_cart["cart"])
+            messages.warning(request, "Your checkout was updated because some items are missing or no longer available.")
+        else:
+            _clear_checkout_cart(request)
+            messages.warning(request, "Your cart is empty.")
+            return redirect("items_public")
+
+    cart_items = resolved_cart["cart_items"]
+    total_amount = resolved_cart["total_amount"]
+
+    if request.method == "POST":
+        form = CheckoutForm(request.POST)
+        if resolved_cart["missing_count"] or resolved_cart["unavailable_count"]:
+            messages.warning(request, "Please review your updated cart before completing checkout.")
+        elif form.is_valid():
+            with transaction.atomic():
+                order_id = f"ORD-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:8].upper()}"
+                order = Order.objects.create(
+                    order_id=order_id,
+                    buyer=request.user,
+                    total_amount=total_amount,
+                    phone_number=form.cleaned_data["phone_number"],
+                    buyer_name=form.cleaned_data["buyer_name"],
+                    buyer_email=form.cleaned_data["buyer_email"],
+                    delivery_address=form.cleaned_data["delivery_address"],
+                    status="pending",
+                )
+
+                for cart_item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        item=cart_item["item"],
+                        seller=cart_item["item"].owner,
+                        quantity=cart_item["quantity"],
+                        price=cart_item["item"].price,
+                        subtotal=cart_item["subtotal"],
+                    )
+
+                Payment.objects.create(
+                    order=order,
+                    amount=total_amount,
+                    phone_number=form.cleaned_data["phone_number"],
+                    status="pending",
+                )
+
+            _clear_checkout_cart(request)
+            _flag_browser_cart_clear(request)
+            return redirect("initiate_payment", order_id=order.order_id)
+    else:
+        form = CheckoutForm(initial=_checkout_prefill_initial_data(request.user))
+
+    return render(
+        request,
+        "checkout.html",
+        {
+            "form": form,
+            "cart_items": cart_items,
+            "total_amount": total_amount,
+        },
+    )
+
+
+@login_required
+def initiate_payment(request, order_id):
+    """Initiate MPESA payment"""
+    order = get_object_or_404(Order, order_id=order_id, buyer=request.user)
+
+    if order.status not in ["pending", "failed"]:
+        messages.error(request, "This order cannot be paid.")
+        return redirect("orders_list")
+
+    payment = order.payment
+    clear_browser_cart = _consume_browser_cart_clear_flag(request)
+
+    try:
+        mpesa = create_mpesa_client()
+        callback_url = mpesa.get_callback_url()
+        result = mpesa.initiate_stk_push(
+            phone_number=payment.phone_number,
+            amount=int(payment.amount),
+            order_id=order.order_id,
+            callback_url=callback_url,
+        )
+
+        if "CheckoutRequestID" in result:
+            payment.checkout_request_id = result["CheckoutRequestID"]
+            payment.status = "initiated"
+            payment.result_description = ""
+            payment.save(update_fields=["checkout_request_id", "status", "result_description"])
+
+            PaymentLog.objects.create(
+                payment=payment,
+                event="STK_PUSH_INITIATED",
+                message=f"STK push initiated for order {order.order_id}",
+                response_data=result,
+            )
+
+            order.status = "payment_initiated"
+            order.save(update_fields=["status", "updated_at"])
+
+            messages.success(request, f"Check your phone {payment.phone_number} for the payment prompt.")
+            return render(
+                request,
+                "payment_pending.html",
+                {
+                    "order": order,
+                    "payment": payment,
+                    "clear_browser_cart": clear_browser_cart,
+                },
+            )
+
+        error_msg = result.get("errorMessage") or result.get("ResponseDescription") or "Failed to initiate payment."
+        PaymentLog.objects.create(
+            payment=payment,
+            event="STK_PUSH_FAILED",
+            message=error_msg,
+            response_data=result,
+        )
+        payment.status = "failed"
+        payment.result_description = error_msg
+        payment.save(update_fields=["status", "result_description"])
+        order.status = "failed"
+        order.save(update_fields=["status", "updated_at"])
+        messages.error(request, error_msg)
+        return render(
+            request,
+            "payment_failed.html",
+            {
+                "order": order,
+                "payment": payment,
+                "clear_browser_cart": clear_browser_cart,
+            },
+        )
+
+    except MPESAConfigurationError as exc:
+        error_message = str(exc)
+        payment.status = "failed"
+        payment.result_description = error_message
+        payment.save(update_fields=["status", "result_description"])
+        order.status = "failed"
+        order.save(update_fields=["status", "updated_at"])
+        PaymentLog.objects.create(
+            payment=payment,
+            event="STK_PUSH_CONFIG_ERROR",
+            message=error_message,
+            response_data={},
+        )
+        messages.error(request, error_message)
+        return render(
+            request,
+            "payment_failed.html",
+            {
+                "order": order,
+                "payment": payment,
+                "clear_browser_cart": clear_browser_cart,
+            },
+        )
+
+    except Exception as exc:
+        error_message = str(exc)
+        payment.status = "failed"
+        payment.result_description = error_message
+        payment.save(update_fields=["status", "result_description"])
+        order.status = "failed"
+        order.save(update_fields=["status", "updated_at"])
+        PaymentLog.objects.create(
+            payment=payment,
+            event="STK_PUSH_ERROR",
+            message=error_message,
+            response_data={},
+        )
+        messages.error(request, f"Error initiating payment: {error_message}")
+        return render(
+            request,
+            "payment_failed.html",
+            {
+                "order": order,
+                "payment": payment,
+                "clear_browser_cart": clear_browser_cart,
+            },
+        )
+
+
+@csrf_exempt  # MPESA callback doesn't have CSRF token
+def mpesa_callback(request):
+    """MPESA payment callback handler"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Extract data from MPESA callback
+        result_data = data.get('Body', {}).get('stkCallback', {})
+        request_id = result_data.get('CheckoutRequestID')
+        result_code = result_data.get('ResultCode')
+        result_desc = result_data.get('ResultDesc', '')
+        callback_metadata = result_data.get('CallbackMetadata', {})
+        
+        # Find payment by checkout request ID
+        payment = Payment.objects.filter(checkout_request_id=request_id).first()
+        
+        if not payment:
+            return JsonResponse({'success': False, 'message': 'Payment not found'}, status=404)
+        
+        order = payment.order
+        
+        # Log the callback
+        PaymentLog.objects.create(
+            payment=payment,
+            event='CALLBACK_RECEIVED',
+            message=result_desc,
+            response_data=data
+        )
+        
+        # Check result code
+        if result_code == 0:
+            # Payment successful
+            items = callback_metadata.get('Item', [])
+            mpesa_receipt = None
+            
+            for item in items:
+                if item.get('Name') == 'MpesaReceiptNumber':
+                    mpesa_receipt = item.get('Value')
+            
+            payment.status = 'completed'
+            payment.mpesa_receipt = mpesa_receipt
+            payment.result_code = result_code
+            payment.result_description = result_desc
+            payment.completed_at = timezone.now()
+            payment.save()
+            
+            order.status = 'paid'
+            order.paid_at = timezone.now()
+            order.save()
+            
+            PaymentLog.objects.create(
+                payment=payment,
+                event='PAYMENT_SUCCESSFUL',
+                message=f"Payment successful. Receipt: {mpesa_receipt}",
+                response_data=callback_metadata
+            )
+            
+            # Send confirmation email (optional)
+            # send_payment_confirmation_email(order)
+            
+            return JsonResponse({'success': True, 'message': 'Payment received'})
+        else:
+            # Payment failed
+            payment.status = 'failed'
+            payment.result_code = result_code
+            payment.result_description = result_desc
+            payment.save()
+            
+            order.status = 'failed'
+            order.save()
+            
+            PaymentLog.objects.create(
+                payment=payment,
+                event='PAYMENT_FAILED',
+                message=result_desc,
+                response_data=data
+            )
+            
+            return JsonResponse({'success': False, 'message': result_desc})
+    
+    except Exception as e:
+        logger.error(f"Error processing MPESA callback: {str(e)}")
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+def payment_status(request, order_id):
+    """Check payment status"""
+    order = get_object_or_404(Order, order_id=order_id, buyer=request.user)
+    payment = order.payment
+
+    wants_json = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in request.headers.get("Accept", "")
+    )
+    if wants_json:
+        return JsonResponse(_payment_status_payload(order, payment))
+
+    return render(
+        request,
+        "payment_status.html",
+        {
+            "order": order,
+            "payment": payment,
+        },
+    )
+
+
+@login_required
+def orders_list(request):
+    """View user's orders"""
+    orders = Order.objects.filter(buyer=request.user).prefetch_related('items').order_by('-created_at')
+    
+    return render(request, 'orders_list.html', {
+        'orders': orders,
+    })
+
+
+@login_required
+def order_detail(request, order_id):
+    """View order details"""
+    order = get_object_or_404(Order, order_id=order_id, buyer=request.user)
+    order_items = order.items.select_related('item', 'seller')
+    
+    return render(request, 'order_detail.html', {
+        'order': order,
+        'order_items': order_items,
+    })

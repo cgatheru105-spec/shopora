@@ -86,7 +86,7 @@
       </div>
       <div class="bh-stat-card">
         <div class="bh-stat-label">Average price</div>
-        <div class="bh-stat-value">{% if profile_stats.avg_price %}${{ profile_stats.avg_price|floatformat:2 }}{% else %}-{% endif %}</div>
+        <div class="bh-stat-value">{% if profile_stats.avg_price %}Ksh{{ profile_stats.avg_price|floatformat:2 }}{% else %}-{% endif %}</div>
       </div>
       <div class="bh-stat-card">
         <div class="bh-stat-label">Latest listing</div>

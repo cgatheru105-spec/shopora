@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rate {{ seller.username }} - Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="mb-4">
+        <h1 class="bh-section-title h3">{% if is_update %}Update{% else %}Rate{% endif %} {{ seller.username }}</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <form method="post" class="bh-form">
+            {% csrf_token %}
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Seller Rating</label>
+              <div class="bh-rating-input">
+                {% for value, label in form.rating.field.choices %}
+                  <div class="form-check mb-2">
+                    <input type="radio" class="form-check-input" id="rating_{{ value }}" 
+                           name="rating" value="{{ value }}" 
+                           {% if form.rating.value == value|stringformat:"s" %}checked{% endif %}>
+                    <label class="form-check-label" for="rating_{{ value }}">
+                      <span class="bh-rating-star">★ {{ value }}/5</span> - {{ label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+              {% if form.rating.errors %}
+                <div class="alert alert-danger mt-2">{{ form.rating.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label for="{{ form.comment.id_for_label }}" class="form-label fw-semibold">Your Experience (optional)</label>
+              <p class="text-muted small mb-2">Share details about communication, product quality, delivery, or any other relevant feedback.</p>
+              {{ form.comment }}
+              {% if form.comment.errors %}
+                <div class="alert alert-danger mt-2">{{ form.comment.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success">{% if is_update %}Update{% else %}Submit{% endif %} Rating</button>
+              <a href="{% url 'profile_public' seller.username %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="col-md-4">
+          <div class="bh-surface p-3 rounded">
+            <h5 class="mb-3">About this seller</h5>
+            <div class="mb-3">
+              <strong class="d-block mb-2">{{ seller.username }}</strong>
+              <small class="text-muted">Joined {{ seller.date_joined|date:"M Y" }}</small>
+            </div>
+            <a href="{% url 'profile_public' seller.username %}" class="btn btn-outline-success btn-sm w-100">View Profile</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

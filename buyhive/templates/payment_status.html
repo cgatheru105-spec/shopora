@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Status - EcoMart Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          {% if order.is_paid %}
+            <!-- Payment Successful -->
+            <div class="bh-surface p-5 rounded text-center">
+              <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+              <h2 class="mb-3 text-success">Payment Successful!</h2>
+              <p class="lead text-muted mb-4">
+                Your payment has been received and confirmed.
+              </p>
+
+              <div class="alert alert-success mb-4">
+                <h6 class="alert-heading">Order Confirmed</h6>
+                We're processing your order. You'll receive a confirmation email shortly with delivery details.
+              </div>
+
+              <div class="mb-4 p-3 bh-surface-soft rounded">
+                <h6 class="mb-3">Payment Receipt</h6>
+                <div class="text-start">
+                  <div class="row g-2 mb-2">
+                    <div class="col-6"><strong>Order ID:</strong></div>
+                    <div class="col-6"><code>{{ order.order_id }}</code></div>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6"><strong>Amount Paid:</strong></div>
+                    <div class="col-6"><strong class="text-success">KES {{ order.total_amount }}</strong></div>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6"><strong>MPESA Receipt:</strong></div>
+                    <div class="col-6">{{ payment.mpesa_receipt }}</div>
+                  </div>
+                  <div class="row g-2">
+                    <div class="col-6"><strong>Date:</strong></div>
+                    <div class="col-6">{{ order.paid_at|date:"M d, Y H:i" }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2">
+                <a href="{% url 'order_detail' order.order_id %}" class="btn btn-success">View Order Details</a>
+                <a href="{% url 'orders_list' %}" class="btn btn-outline-secondary">View All Orders</a>
+                <a href="{% url 'items_public' %}" class="btn btn-outline-primary">Continue Shopping</a>
+              </div>
+            </div>
+          {% elif order.status == 'payment_initiated' or payment.status == 'initiated' %}
+            <!-- Payment Pending -->
+            <div class="bh-surface p-5 rounded text-center">
+              <div style="font-size: 64px; margin-bottom: 20px;">⏳</div>
+              <h2 class="mb-3">Payment Awaiting Confirmation</h2>
+              <p class="lead text-muted mb-4">
+                We're still waiting for your MPESA confirmation.
+              </p>
+
+              <div class="alert alert-warning mb-4">
+                <h6 class="alert-heading">Taking long?</h6>
+                Please check that:
+                <ul class="mb-0 mt-2 text-start">
+                  <li>You received the MPESA prompt on {{ payment.phone_number }}</li>
+                  <li>You entered your MPESA PIN correctly</li>
+                  <li>Your network connection is stable</li>
+                  <li>You have sufficient funds in your MPESA wallet</li>
+                </ul>
+              </div>
+
+              <div class="mb-4 p-3 bh-surface-soft rounded">
+                <h6 class="mb-2">Order Details</h6>
+                <div class="text-start">
+                  <div class="row g-2 mb-2">
+                    <div class="col-6"><strong>Order ID:</strong></div>
+                    <div class="col-6"><code>{{ order.order_id }}</code></div>
+                  </div>
+                  <div class="row g-2 mb-2">
+                    <div class="col-6"><strong>Amount:</strong></div>
+                    <div class="col-6"><strong>KES {{ order.total_amount }}</strong></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2">
+                <button onclick="location.reload()" class="btn btn-primary">Refresh Status</button>
+                <a href="{% url 'orders_list' %}" class="btn btn-outline-secondary">Back to Orders</a>
+              </div>
+            </div>
+          {% elif order.status == 'failed' %}
+            <!-- Payment Failed -->
+            <div class="bh-surface p-5 rounded text-center">
+              <div style="font-size: 64px; margin-bottom: 20px;">❌</div>
+              <h2 class="mb-3 text-danger">Payment Failed</h2>
+              <p class="lead text-muted mb-4">
+                Your payment could not be processed.
+              </p>
+
+              <div class="alert alert-danger mb-4">
+                <h6 class="alert-heading">Reason</h6>
+                {{ payment.result_description }}
+              </div>
+
+              <div class="mb-4 p-3 bh-surface-soft rounded text-start">
+                <h6 class="mb-2">Possible reasons:</h6>
+                <ul class="mb-0 small">
+                  <li>Insufficient funds in MPESA wallet</li>
+                  <li>Incorrect PIN entered</li>
+                  <li>Network connectivity issues</li>
+                  <li>Payment request expired (40 seconds timeout)</li>
+                  <li>Daily transaction limit exceeded</li>
+                </ul>
+              </div>
+
+              <div class="d-grid gap-2">
+                <a href="{% url 'initiate_payment' order.order_id %}" class="btn btn-danger">Try Payment Again</a>
+                <a href="{% url 'order_detail' order.order_id %}" class="btn btn-outline-secondary">View Order</a>
+                <a href="{% url 'orders_list' %}" class="btn btn-outline-secondary">View Orders</a>
+              </div>
+
+              <div class="alert alert-info mt-4 small text-start">
+                <strong>Need help?</strong> Contact our support team if you need assistance.
+              </div>
+            </div>
+          {% else %}
+            <!-- Unknown Status -->
+            <div class="bh-surface p-5 rounded text-center">
+              <div style="font-size: 64px; margin-bottom: 20px;">❓</div>
+              <h2 class="mb-3">Status Unknown</h2>
+              <p class="lead text-muted mb-4">
+                We couldn't determine your payment status.
+              </p>
+
+              <div class="mb-4 p-3 bh-surface-soft rounded">
+                <h6 class="mb-2">Order Info</h6>
+                <div class="text-start small">
+                  <div><strong>Order ID:</strong> {{ order.order_id }}</div>
+                  <div><strong>Status:</strong> {{ order.get_status_display }}</div>
+                </div>
+              </div>
+
+              <div class="d-grid gap-2">
+                <button onclick="location.reload()" class="btn btn-primary">Refresh</button>
+                <a href="{% url 'orders_list' %}" class="btn btn-outline-secondary">View Orders</a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

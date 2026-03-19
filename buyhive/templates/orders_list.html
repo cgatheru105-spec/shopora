@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders - EcoMart Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="bh-page-intro mb-4">
+        <div>
+          <h1 class="bh-section-title h3 mb-0">My Orders</h1>
+          <p class="text-muted">Track and manage your purchases</p>
+        </div>
+      </div>
+
+      {% if orders %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Items</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in orders %}
+                <tr>
+                  <td>
+                    <code class="small">{{ order.order_id }}</code>
+                  </td>
+                  <td>{{ order.created_at|date:"M d, Y" }}</td>
+                  <td>
+                    <small class="text-muted">{{ order.items.count }} item{{ order.items.count|pluralize }}</small>
+                  </td>
+                  <td>
+                    <strong>KES {{ order.total_amount }}</strong>
+                  </td>
+                  <td>
+                    {% if order.status == 'paid' %}
+                      <span class="badge bg-success">✓ Paid</span>
+                    {% elif order.status == 'payment_initiated' %}
+                      <span class="badge bg-warning">⏳ Pending</span>
+                    {% elif order.status == 'completed' %}
+                      <span class="badge bg-info">📦 Completed</span>
+                    {% elif order.status == 'failed' %}
+                      <span class="badge bg-danger">✗ Failed</span>
+                    {% elif order.status == 'cancelled' %}
+                      <span class="badge bg-secondary">⊗ Cancelled</span>
+                    {% else %}
+                      <span class="badge bg-light text-dark">{{ order.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'order_detail' order.order_id %}" class="btn btn-sm btn-outline-primary">View</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="bh-empty-state text-center p-5">
+          <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+          <h3>No orders yet</h3>
+          <p class="text-muted mb-3">You haven't made any purchases. Start shopping!</p>
+          <a href="{% url 'items_public' %}" class="btn btn-success">Browse Items</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

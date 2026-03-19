@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recently Viewed - Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="bh-page-intro mb-4">
+        <div>
+          <h1 class="bh-section-title h3 mb-0">Recently Viewed</h1>
+          <p class="text-muted">{{ count }} item{{ count|pluralize }}</p>
+        </div>
+      </div>
+
+      {% if items %}
+        <div class="row g-3">
+          {% for item in items %}
+            <div class="col-12 col-sm-6 col-lg-3">
+              <article class="card bh-product-card h-100">
+                {% if item.image_url %}
+                  <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
+                {% else %}
+                  <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+                {% endif %}
+
+                <div class="card-body">
+                  {% if not item.is_available %}
+                    <span class="bh-status-badge bh-status-unavailable">Out of Stock</span>
+                  {% else %}
+                    <span class="bh-status-badge bh-status-available">In Stock</span>
+                  {% endif %}
+                  
+                  <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                  <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
+                  
+                  {% if item.average_rating > 0 %}
+                    <div class="bh-product-rating">
+                      <span class="bh-product-rating-stars">★</span>
+                      <span>{{ item.average_rating|floatformat:1 }} ({{ item.total_reviews }})</span>
+                    </div>
+                  {% endif %}
+
+                  <div class="bh-price mt-2">Ksh{{ item.price }}</div>
+                </div>
+
+                <div class="card-footer bg-transparent border-0 bh-card-footer">
+                  <small class="text-muted">by {{ item.owner_username }}</small>
+                  <div class="bh-card-actions">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      data-bh-add-to-cart
+                      data-bh-cart-id="item-{{ item.id }}"
+                      data-bh-cart-name="{{ item.name }}"
+                      data-bh-cart-price="{{ item.price }}"
+                      data-bh-cart-seller="{{ item.owner_username }}"
+                      data-bh-cart-url="{{ item.owner_profile_url }}"
+                      data-bh-cart-image="{{ item.image_url }}"
+                    >Add to Cart</button>
+                    <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm">Seller</a>
+                  </div>
+                </div>
+              </article>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bh-empty-state">
+          <div class="bh-empty-state-icon">👀</div>
+          <h2 class="bh-empty-state-title">No recently viewed items</h2>
+          <p class="bh-empty-state-description">Items you view will appear here for quick access.</p>
+          <a href="{% url 'items_public' %}" class="btn btn-success">Start browsing</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

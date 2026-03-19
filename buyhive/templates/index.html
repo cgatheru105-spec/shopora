@@ -47,7 +47,7 @@
         <div class="bh-stat-card">
           <div class="bh-stat-label">Average price</div>
           <div class="bh-stat-value">
-            {% if marketplace_snapshot.average_price %}${{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+            {% if marketplace_snapshot.average_price %}Ksh{{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
           </div>
         </div>
       </div>
@@ -119,7 +119,7 @@
                   <span class="bh-mini-badge">Popular</span>
                   <span class="bh-mini-badge">Fresh pick</span>
                 </div>
-                <div class="bh-price mt-2">${{ item.price }}</div>
+                <div class="bh-price mt-2">Ksh{{ item.price }}</div>
               </div>
 
               <div class="card-footer bg-transparent border-0 bh-card-footer">
@@ -135,7 +135,7 @@
                     data-bh-cart-seller="{{ item.owner_username }}"
                     data-bh-cart-url="{{ item.owner_profile_url }}"
                     data-bh-cart-image="{{ item.image_url }}"
-                  >Cart</button>
+                  >Add to Cart</button>
                   <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
                 </div>
               </div>
@@ -216,7 +216,7 @@
                   <p>{{ item.description|truncatechars:78 }}</p>
                 </div>
                 <div class="bh-inline-item-actions">
-                  <div class="bh-price">${{ item.price }}</div>
+                  <div class="bh-price">Ksh{{ item.price }}</div>
                   <button
                     type="button"
                     class="btn btn-outline-secondary btn-sm"
@@ -261,7 +261,7 @@
                   <p>{{ item.description|truncatechars:78 }}</p>
                 </div>
                 <div class="bh-inline-item-actions">
-                  <div class="bh-price">${{ item.price }}</div>
+                  <div class="bh-price">Ksh{{ item.price }}</div>
                   <button
                     type="button"
                     class="btn btn-outline-secondary btn-sm"

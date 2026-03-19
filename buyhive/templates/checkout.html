@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - EcoMart Shopora{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  <link rel="stylesheet" href="{% static 'css/features.css' %}">
+{% endblock %}
+
+{% block content %}
+  <section class="bh-section-wrapper">
+    <div class="bh-section-shell">
+      <div class="bh-page-intro mb-4">
+        <div>
+          <h1 class="bh-section-title h3 mb-0">Checkout</h1>
+          <p class="text-muted">Review your order and complete payment</p>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+          <div class="bh-surface p-4 rounded mb-4">
+            <h5 class="mb-3">Order Summary</h5>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Seller</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in cart_items %}
+                    <tr>
+                      <td>
+                        <strong>{{ item.item.name }}</strong>
+                        <br>
+                        <small class="text-muted">{{ item.item.description|truncatechars:50 }}</small>
+                      </td>
+                      <td>{{ item.item.owner.username }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>Ksh{{ item.item.price }}</td>
+                      <td><strong>Ksh{{ item.subtotal }}</strong></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <th colspan="4" class="text-end">Total:</th>
+                    <th><strong class="h5">Ksh{{ total_amount }}</strong></th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- Checkout Form -->
+          <div class="bh-surface p-4 rounded">
+            <h5 class="mb-3">Delivery Information</h5>
+            <form method="post" id="checkoutForm">
+              {% csrf_token %}
+              <input type="hidden" name="checkout_action" value="submit">
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="{{ form.buyer_name.id_for_label }}" class="form-label">Full Name *</label>
+                  {{ form.buyer_name }}
+                  {% if form.buyer_name.errors %}
+                    <div class="alert alert-danger small mt-1">{{ form.buyer_name.errors }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label for="{{ form.buyer_email.id_for_label }}" class="form-label">Email Address *</label>
+                  {{ form.buyer_email }}
+                  {% if form.buyer_email.errors %}
+                    <div class="alert alert-danger small mt-1">{{ form.buyer_email.errors }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number *</label>
+                  {{ form.phone_number }}
+                  <small class="text-muted d-block mt-1">Format: 0712345678 or 254712345678</small>
+                  {% if form.phone_number.errors %}
+                    <div class="alert alert-danger small mt-1">{{ form.phone_number.errors }}</div>
+                  {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Order Total</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Ksh</span>
+                    <input type="text" class="form-control" value="{{ total_amount }}" disabled>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <label for="{{ form.delivery_address.id_for_label }}" class="form-label">Delivery Address *</label>
+                  {{ form.delivery_address }}
+                  {% if form.delivery_address.errors %}
+                    <div class="alert alert-danger small mt-1">{{ form.delivery_address.errors }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-success btn-lg">
+                  <i class="bi bi-credit-card me-2"></i>Proceed to Payment
+                </button>
+                <a href="{% url 'items_public' %}" class="btn btn-outline-secondary">Continue Shopping</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div class="col-lg-4">
+          <div class="bh-surface p-4 rounded sticky-top" style="top: 20px;">
+            <h5 class="mb-3">Payment Summary</h5>
+            
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal</span>
+                <span>Ksh{{ total_amount }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Delivery Fee</span>
+                <span class="text-success">Free</span>
+              </div>
+              <hr>
+              <div class="d-flex justify-content-between">
+                <strong>Total Amount</strong>
+                <strong class="h5">Ksh{{ total_amount }}</strong>
+              </div>
+            </div>
+
+            <div class="alert alert-info small">
+              <i class="bi bi-info-circle me-2"></i>
+              You'll receive an MPESA prompt on your phone after submitting this form.
+            </div>
+
+            <div class="alert alert-warning small">
+              <i class="bi bi-shield-exclamation me-2"></i>
+              Ensure your phone number is correct. You have 40 seconds to enter your PIN.
+            </div>
+
+            <div class="bh-surface-soft p-3 rounded">
+              <h6 class="mb-2">Payment Methods</h6>
+              <div class="d-flex align-items-center">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" 
+                     alt="MPESA" style="height: 30px; margin-right: 8px;">
+                <span>MPESA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

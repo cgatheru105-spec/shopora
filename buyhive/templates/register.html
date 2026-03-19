@@ -50,6 +50,24 @@
           {% endif %}
         </div>
 
+        <div class="mb-3">
+          <label class="form-label small text-muted">Phone Number (for MPESA payments)</label>
+          {{ form.phone_number }}
+          <small class="text-muted">Optional - Format: 0712345678 or 254712345678</small>
+          {% if form.phone_number.errors %}
+            <div class="text-danger small mt-1">{{ form.phone_number.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small text-muted">Delivery Address</label>
+          {{ form.delivery_address }}
+          <small class="text-muted">Optional - Your default delivery address</small>
+          {% if form.delivery_address.errors %}
+            <div class="text-danger small mt-1">{{ form.delivery_address.errors|striptags }}</div>
+          {% endif %}
+        </div>
+
         <button type="submit" class="btn btn-success w-100">Register</button>
 
         <p class="text-center text-muted small mt-3 mb-0">

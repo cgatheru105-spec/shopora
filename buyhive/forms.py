@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from .constants import FOUNDER_USERNAMES_BY_KEY
-from .models import Item, Profile
+from .models import Item, Profile, ItemReview, SellerRating
 
 
 class RegisterForm(forms.Form):
@@ -19,6 +19,10 @@ class RegisterForm(forms.Form):
         ),
         required=True,
     )
+    
+    # Contact and address information
+    phone_number = forms.CharField(max_length=15, required=False, help_text="Phone number for MPESA payments (optional)")
+    delivery_address = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, help_text="Default delivery address (optional)")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,6 +39,12 @@ class RegisterForm(forms.Form):
             {"class": "form-control", "placeholder": "Confirm password"}
         )
         self.fields["account_type"].widget.attrs.update({"class": "form-select"})
+        self.fields["phone_number"].widget.attrs.update(
+            {"class": "form-control", "placeholder": "0712345678 or 254712345678"}
+        )
+        self.fields["delivery_address"].widget.attrs.update(
+            {"class": "form-control", "placeholder": "Your delivery address"}
+        )
 
     def clean_username(self):
         username = (self.cleaned_data.get("username") or "").strip()
@@ -50,6 +60,17 @@ class RegisterForm(forms.Form):
         if User.objects.filter(email__iexact=email).exists():
             raise ValidationError("An account with this email already exists.")
         return email
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get("phone_number", "").strip()
+        if phone_number:
+            # Basic phone number validation for Kenyan numbers
+            phone_number = ''.join(filter(str.isdigit, phone_number))
+            if len(phone_number) < 9 or len(phone_number) > 12:
+                raise ValidationError("Please enter a valid phone number.")
+            if not (phone_number.startswith('07') and len(phone_number) == 10) and not (phone_number.startswith('2547') and len(phone_number) == 12):
+                raise ValidationError("Please enter a valid Kenyan phone number (e.g., 0712345678 or 254712345678).")
+        return phone_number or None
 
     def clean(self):
         cleaned = super().clean()
@@ -89,13 +110,14 @@ class LoginForm(forms.Form):
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ("name", "description", "price")
+        fields = ("name", "description", "price", "is_available")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["name"].widget.attrs.update({"class": "form-control"})
         self.fields["description"].widget.attrs.update({"class": "form-control", "rows": 4})
         self.fields["price"].widget.attrs.update({"class": "form-control"})
+        self.fields["is_available"].widget.attrs.update({"class": "form-check-input"})
 
 
 class ProfilePictureForm(forms.ModelForm):
@@ -148,6 +170,46 @@ class ItemFilterForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"})
     )
 
+
+class ItemReviewForm(forms.ModelForm):
+    class Meta:
+        model = ItemReview
+        fields = ("rating", "title", "review_text")
+        widgets = {
+            "rating": forms.RadioSelect(choices=ItemReview.RATING_CHOICES),
+            "title": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Review title (optional)"
+            }),
+            "review_text": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Share your experience with this item (optional)"
+            })
+        }
+
+
+class SellerRatingForm(forms.ModelForm):
+    class Meta:
+        model = SellerRating
+        fields = ("rating", "comment")
+        widgets = {
+            "rating": forms.RadioSelect(choices=SellerRating.RATING_CHOICES),
+            "comment": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Optional: Share your experience with this seller"
+            })
+        }
+
+
+class AvailabilityFilterForm(forms.Form):
+    available_only = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        label="Available items only"
+    )
+
     def clean_profile_picture(self):
         file = self.cleaned_data.get("profile_picture")
         if not file:
@@ -156,3 +218,43 @@ class ItemFilterForm(forms.Form):
         if not content_type.startswith("image/"):
             raise ValidationError("Please upload an image file.")
         return file
+
+
+class CheckoutForm(forms.Form):
+    buyer_name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Full name"
+        })
+    )
+    buyer_email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            "class": "form-control",
+            "placeholder": "Email address"
+        })
+    )
+    phone_number = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Phone number (e.g., 0712345678 or 254712345678)"
+        })
+    )
+    delivery_address = forms.CharField(
+        widget=forms.Textarea(attrs={
+            "class": "form-control",
+            "placeholder": "Delivery address",
+            "rows": 3
+        })
+    )
+
+    def clean_phone_number(self):
+        phone = self.cleaned_data.get("phone_number", "").strip()
+        if not phone:
+            raise ValidationError("Phone number is required.")
+        # Remove non-digit characters for validation
+        digits = ''.join(filter(str.isdigit, phone))
+        if len(digits) < 10:
+            raise ValidationError("Please enter a valid phone number.")
+        return phone
