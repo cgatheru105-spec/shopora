@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 import uuid
 import json
 import logging
+from urllib.parse import urlencode
 
 from .constants import FOUNDER_USERNAMES, FOUNDER_USERNAMES_BY_KEY
 from .forms import (
@@ -19,8 +20,8 @@ from .forms import (
     LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm
 )
 from .models import (
-    Item, ItemImage, ItemReview, Profile, RecentlyViewed, SellerRating, Wishlist,
-    Order, OrderItem, Payment, PaymentLog
+    Item, ItemImage, ItemReview, MarketCategory, Order, OrderItem, Payment,
+    PaymentLog, Profile, RecentlyViewed, SellerRating, Wishlist
 )
 from .mpesa_utils import MPESAConfigurationError, create_mpesa_client
 
@@ -71,6 +72,8 @@ def _serialize_item_card(item, include_owner=False, user=None):
         "total_reviews": item.total_reviews,
         "wishlist_count": item.wishlist_count,
         "is_wishlisted": False,
+        "category_name": item.category.name if item.category else "",
+        "category_slug": item.category.slug if item.category else "",
     }
     if user and user.is_authenticated:
         card["is_wishlisted"] = Wishlist.objects.filter(user=user, item=item).exists()
@@ -94,7 +97,176 @@ def _get_marketplace_snapshot():
     snapshot["community_members"] = Profile.objects.exclude(
         account_type=Profile.ACCOUNT_STAFF
     ).count()
+    snapshot["active_categories"] = (
+        MarketCategory.objects.filter(items__isnull=False).distinct().count()
+    )
     return snapshot
+
+
+def _items_public_url(**params):
+    base_url = reverse("items_public")
+    if not params:
+        return base_url
+    return f"{base_url}?{urlencode(params)}"
+
+
+def _get_category_hubs(limit=6, owner=None):
+    item_filter = models.Q()
+    if owner is not None:
+        item_filter &= models.Q(items__owner=owner)
+
+    categories = (
+        MarketCategory.objects.annotate(
+            listing_count=models.Count("items", filter=item_filter, distinct=True),
+            available_count=models.Count(
+                "items",
+                filter=item_filter & models.Q(items__is_available=True),
+                distinct=True,
+            ),
+            seller_count=models.Count("items__owner", filter=item_filter, distinct=True),
+            average_price=models.Avg("items__price", filter=item_filter),
+        )
+        .filter(listing_count__gt=0)
+        .order_by("-listing_count", "name")[:limit]
+    )
+
+    hubs = []
+    for category in categories:
+        hubs.append(
+            {
+                "name": category.name,
+                "slug": category.slug,
+                "icon": category.icon,
+                "theme": category.theme,
+                "description": category.description,
+                "listing_count": category.listing_count,
+                "available_count": category.available_count,
+                "seller_count": category.seller_count,
+                "average_price": category.average_price,
+                "browse_url": _items_public_url(category=category.slug),
+            }
+        )
+    return hubs
+
+
+def _get_market_radar():
+    radar = []
+
+    busiest_category = (
+        MarketCategory.objects.annotate(
+            listing_count=models.Count("items", distinct=True),
+            seller_count=models.Count("items__owner", distinct=True),
+        )
+        .filter(listing_count__gt=0)
+        .order_by("-listing_count", "name")
+        .first()
+    )
+    if busiest_category:
+        radar.append(
+            {
+                "eyebrow": "Busiest aisle",
+                "title": busiest_category.name,
+                "value": f"{busiest_category.listing_count} live listing{'s' if busiest_category.listing_count != 1 else ''}",
+                "summary": f"Stocked by {busiest_category.seller_count} seller{'s' if busiest_category.seller_count != 1 else ''}.",
+                "href": _items_public_url(category=busiest_category.slug),
+                "cta": "Browse aisle",
+                "theme": busiest_category.theme,
+            }
+        )
+
+    most_saved_item = (
+        Item.objects.select_related("owner", "category")
+        .annotate(
+            save_count=models.Count("wishlisted_by", distinct=True),
+            review_count=models.Count("item_reviews", distinct=True),
+        )
+        .filter(save_count__gt=0)
+        .order_by("-save_count", "-review_count", "-created_at")
+        .first()
+    )
+    if most_saved_item:
+        radar.append(
+            {
+                "eyebrow": "Most saved",
+                "title": most_saved_item.name,
+                "value": f"{most_saved_item.save_count} wishlist save{'s' if most_saved_item.save_count != 1 else ''}",
+                "summary": f"From @{most_saved_item.owner.username} and still drawing attention.",
+                "href": reverse("profile_public", args=[most_saved_item.owner.username]),
+                "cta": "View seller",
+                "theme": most_saved_item.category.theme if most_saved_item.category else MarketCategory.THEME_PANTRY,
+            }
+        )
+
+    top_rated_item = (
+        Item.objects.select_related("owner", "category")
+        .annotate(
+            average_score=models.Avg("item_reviews__rating"),
+            review_count=models.Count("item_reviews", distinct=True),
+        )
+        .filter(review_count__gt=0)
+        .order_by("-average_score", "-review_count", "-created_at")
+        .first()
+    )
+    if top_rated_item:
+        radar.append(
+            {
+                "eyebrow": "Top rated pick",
+                "title": top_rated_item.name,
+                "value": f"{top_rated_item.average_score:.1f}/5 from {top_rated_item.review_count} review{'s' if top_rated_item.review_count != 1 else ''}",
+                "summary": f"Buyers are rating this @{top_rated_item.owner.username} listing especially highly.",
+                "href": reverse("profile_public", args=[top_rated_item.owner.username]),
+                "cta": "Meet seller",
+                "theme": top_rated_item.category.theme if top_rated_item.category else MarketCategory.THEME_GARDEN,
+            }
+        )
+
+    most_ordered_item = (
+        OrderItem.objects.filter(item__isnull=False)
+        .values("item_id", "item__name", "item__owner__username", "item__category__theme")
+        .annotate(total_units=models.Sum("quantity"), total_orders=models.Count("order", distinct=True))
+        .order_by("-total_units", "-total_orders")
+        .first()
+    )
+    if most_ordered_item:
+        radar.append(
+            {
+                "eyebrow": "Fast mover",
+                "title": most_ordered_item["item__name"],
+                "value": f"{most_ordered_item['total_units']} units across {most_ordered_item['total_orders']} order{'s' if most_ordered_item['total_orders'] != 1 else ''}",
+                "summary": f"One of the marketplace items buyers keep coming back to from @{most_ordered_item['item__owner__username']}.",
+                "href": reverse("profile_public", args=[most_ordered_item["item__owner__username"]]),
+                "cta": "See storefront",
+                "theme": most_ordered_item["item__category__theme"] or MarketCategory.THEME_CITRUS,
+            }
+        )
+    elif not radar:
+        radar.append(
+            {
+                "eyebrow": "Market radar",
+                "title": "First movers wanted",
+                "value": "No engagement signals yet",
+                "summary": "As shoppers save, review, and order products, this panel turns into a live pulse of the marketplace.",
+                "href": reverse("items_public"),
+                "cta": "Explore listings",
+                "theme": MarketCategory.THEME_PANTRY,
+            }
+        )
+
+    return radar[:4]
+
+
+def _get_buyer_activity(user):
+    if not user.is_authenticated:
+        return {}
+
+    latest_order = Order.objects.filter(buyer=user).order_by("-created_at").first()
+    return {
+        "wishlist_count": Wishlist.objects.filter(user=user).count(),
+        "recently_viewed_count": RecentlyViewed.objects.filter(user=user).count(),
+        "orders_count": Order.objects.filter(buyer=user).count(),
+        "latest_order_id": latest_order.order_id if latest_order else "",
+        "latest_order_status": latest_order.get_status_display() if latest_order else "",
+    }
 
 
 def _get_spotlight_sellers(limit=4, exclude_user_id=None):
@@ -182,7 +354,7 @@ def index(request):
     popular_sellers = _active_seller_ids(limit=4, minimum_items=2)
 
     popular_items = list(
-        Item.objects.select_related("owner")
+        Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .filter(owner__in=popular_sellers)
         .order_by("-created_at")[:8]
@@ -193,13 +365,13 @@ def index(request):
 
     fresh_cards = [
         _serialize_item_card(item, include_owner=True, user=request.user)
-        for item in Item.objects.select_related("owner")
+        for item in Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .order_by("-created_at")[:4]
     ]
     budget_cards = [
         _serialize_item_card(item, include_owner=True, user=request.user)
-        for item in Item.objects.select_related("owner")
+        for item in Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .order_by("price", "-created_at")[:4]
     ]
@@ -213,6 +385,8 @@ def index(request):
             "budget_cards": budget_cards,
             "spotlight_sellers": _get_spotlight_sellers(),
             "marketplace_snapshot": _get_marketplace_snapshot(),
+            "category_hubs": _get_category_hubs(),
+            "market_radar": _get_market_radar(),
             "founders": _get_founders(),
         },
     )
@@ -220,7 +394,7 @@ def index(request):
 def Buy_products(request):
     q = (request.GET.get("q") or "").strip()
     items = (
-        Item.objects.select_related("owner")
+        Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .order_by("-created_at")
     )
@@ -307,31 +481,46 @@ def dashboard(request):
         return render(request, "admin/admindashboard.html", {"profile": profile})
 
     if profile and profile.account_type == Profile.ACCOUNT_SELLER:
-        items = Item.objects.filter(owner=request.user)
+        items = Item.objects.filter(owner=request.user).select_related("category").prefetch_related("images")
         total_items = items.count()
-        total_value = sum(item.price for item in items) if items else 0
         recent_items = items.order_by('-created_at')[:5]  # For slider
         seller_snapshot = items.aggregate(
+            total_value=models.Sum("price"),
             average_price=models.Avg("price"),
             latest_listing=models.Max("created_at"),
+        )
+        seller_performance = OrderItem.objects.filter(
+            seller=request.user, order__status__in=["paid", "completed"]
+        ).aggregate(
+            orders_count=models.Count("order", distinct=True),
+            units_sold=models.Sum("quantity"),
+            revenue=models.Sum("subtotal"),
+        )
+        seller_engagement = items.aggregate(
+            wishlist_saves=models.Count("wishlisted_by", distinct=True),
+            reviews_count=models.Count("item_reviews", distinct=True),
+            average_rating=models.Avg("item_reviews__rating"),
         )
         return render(request, "seller/dashboard.html", {
             "profile": profile,
             "total_items": total_items,
-            "total_value": total_value,
+            "total_value": seller_snapshot["total_value"] or 0,
             "recent_items": recent_items,
             "seller_snapshot": seller_snapshot,
+            "seller_performance": seller_performance,
+            "seller_engagement": seller_engagement,
+            "category_hubs": _get_category_hubs(limit=4, owner=request.user),
         })
 
     buyer_cards = [
         _serialize_item_card(item, include_owner=True, user=request.user)
-        for item in Item.objects.select_related("owner")
+        for item in Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .order_by("-created_at")[:3]
     ]
     budget_cards = [
         _serialize_item_card(item, include_owner=True, user=request.user)
-        for item in Item.objects.select_related("owner")
+        for item in Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .order_by("price", "-created_at")[:3]
     ]
@@ -344,6 +533,9 @@ def dashboard(request):
             "marketplace_snapshot": _get_marketplace_snapshot(),
             "recommended_cards": buyer_cards,
             "budget_cards": budget_cards,
+            "market_radar": _get_market_radar(),
+            "buyer_activity": _get_buyer_activity(request.user),
+            "category_hubs": _get_category_hubs(limit=4),
             "spotlight_sellers": _get_spotlight_sellers(
                 limit=3, exclude_user_id=request.user.id
             ),
@@ -381,14 +573,20 @@ def profile_edit(request):
 def items_public_list(request):
     form = ItemFilterForm(request.GET)
     items = (
-        Item.objects.select_related("owner")
+        Item.objects.select_related("owner", "category")
         .prefetch_related("images")
         .order_by("-created_at")
     )
     quick_filter = (request.GET.get("quick") or "").strip()
     marketplace_snapshot = _get_marketplace_snapshot()
+    active_category = None
 
     if form.is_valid():
+        category_slug = form.cleaned_data.get("category")
+        if category_slug:
+            items = items.filter(category__slug=category_slug)
+            active_category = MarketCategory.objects.filter(slug=category_slug).first()
+
         # Search filter
         search_query = form.cleaned_data.get("search")
         if search_query:
@@ -436,6 +634,8 @@ def items_public_list(request):
         "quick_filter": quick_filter,
         "items_count": items_count,
         "marketplace_snapshot": marketplace_snapshot,
+        "category_hubs": _get_category_hubs(limit=6),
+        "active_category": active_category,
         "available_only": available_only,
     })
 
@@ -505,6 +705,7 @@ def profile_public(request, username: str):
     )
     items = list(
         user_items
+        .select_related("category")
         .prefetch_related("images")
         .order_by("-created_at")[:8]
     )
@@ -537,7 +738,7 @@ def _seller_required(request):
 def seller_items(request):
     if not _seller_required(request):
         raise Http404()
-    items = Item.objects.filter(owner=request.user).prefetch_related("images").order_by("-created_at")
+    items = Item.objects.filter(owner=request.user).select_related("category").prefetch_related("images").order_by("-created_at")
     return render(request, "seller/items_list.html", {"items": items})
 
 def _is_image_upload(upload) -> bool:

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Item, Order, OrderItem, Payment, Profile
+from .models import Item, MarketCategory, Order, OrderItem, Payment, Profile, Wishlist
 
 
 class MarketplaceViewTests(TestCase):
@@ -21,11 +21,15 @@ class MarketplaceViewTests(TestCase):
         Profile.objects.create(user=user, account_type=account_type)
         return user
 
+    def _category(self, slug):
+        return MarketCategory.objects.get(slug=slug)
+
     def test_index_includes_discovery_context(self):
         seller = self._make_user("sellerone", "seller@example.com", Profile.ACCOUNT_SELLER)
         for index in range(3):
             Item.objects.create(
                 owner=seller,
+                category=self._category("vegetables"),
                 name=f"Item {index}",
                 description="Fresh listing",
                 price=10 + index,
@@ -39,6 +43,8 @@ class MarketplaceViewTests(TestCase):
         self.assertGreaterEqual(len(response.context["fresh_cards"]), 1)
         self.assertGreaterEqual(len(response.context["budget_cards"]), 1)
         self.assertGreaterEqual(len(response.context["spotlight_sellers"]), 1)
+        self.assertGreaterEqual(len(response.context["category_hubs"]), 1)
+        self.assertGreaterEqual(len(response.context["market_radar"]), 1)
 
     def test_buyer_dashboard_receives_marketplace_sections(self):
         buyer = self._make_user("buyerone", "buyer@example.com", Profile.ACCOUNT_BUYER)
@@ -46,6 +52,7 @@ class MarketplaceViewTests(TestCase):
         for price in (6, 12, 18):
             Item.objects.create(
                 owner=seller,
+                category=self._category("fruits"),
                 name=f"Produce {price}",
                 description="Seasonal produce",
                 price=price,
@@ -60,23 +67,28 @@ class MarketplaceViewTests(TestCase):
         self.assertEqual(len(response.context["recommended_cards"]), 3)
         self.assertEqual(len(response.context["budget_cards"]), 3)
         self.assertEqual(len(response.context["spotlight_sellers"]), 1)
+        self.assertGreaterEqual(len(response.context["market_radar"]), 1)
+        self.assertGreaterEqual(len(response.context["category_hubs"]), 1)
 
     def test_items_public_budget_filter_uses_market_average(self):
         seller = self._make_user("sellerthree", "seller3@example.com", Profile.ACCOUNT_SELLER)
         cheap_item = Item.objects.create(
             owner=seller,
+            category=self._category("fruits"),
             name="Budget Apples",
             description="Affordable option",
             price=3,
         )
         mid_item = Item.objects.create(
             owner=seller,
+            category=self._category("vegetables"),
             name="Daily Greens",
             description="Mid-range option",
             price=9,
         )
         Item.objects.create(
             owner=seller,
+            category=self._category("pantry-essentials"),
             name="Premium Basket",
             description="Higher-end option",
             price=30,
@@ -90,6 +102,72 @@ class MarketplaceViewTests(TestCase):
             list(response.context["items"].values_list("id", flat=True)),
             [cheap_item.id, mid_item.id],
         )
+
+    def test_items_public_category_filter_uses_category_slug(self):
+        seller = self._make_user("sellerfour", "seller4@example.com", Profile.ACCOUNT_SELLER)
+        fruits = self._category("fruits")
+        grains = self._category("grains-legumes")
+        fruit_item = Item.objects.create(
+            owner=seller,
+            category=fruits,
+            name="Sweet Mangoes",
+            description="Fresh fruit",
+            price=15,
+        )
+        Item.objects.create(
+            owner=seller,
+            category=grains,
+            name="Brown Rice",
+            description="Staple grain",
+            price=20,
+        )
+
+        response = self.client.get(reverse("items_public"), {"category": "fruits"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_category"], fruits)
+        self.assertEqual(
+            list(response.context["items"].values_list("id", flat=True)),
+            [fruit_item.id],
+        )
+
+    def test_seller_dashboard_surfaces_category_hubs_and_performance(self):
+        seller = self._make_user("sellerdash", "sellerdash@example.com", Profile.ACCOUNT_SELLER)
+        buyer = self._make_user("buyerdash", "buyerdash@example.com", Profile.ACCOUNT_BUYER)
+        item = Item.objects.create(
+            owner=seller,
+            category=self._category("vegetables"),
+            name="Spinach Bundle",
+            description="Leafy greens",
+            price=14,
+        )
+        Wishlist.objects.create(user=buyer, item=item)
+        order = Order.objects.create(
+            order_id=f"ORD-{uuid.uuid4().hex[:10].upper()}",
+            buyer=buyer,
+            status="paid",
+            total_amount=item.price,
+            phone_number="254712345678",
+            buyer_name="Buyer Dash",
+            buyer_email=buyer.email,
+            delivery_address="Nairobi",
+        )
+        OrderItem.objects.create(
+            order=order,
+            item=item,
+            seller=seller,
+            quantity=2,
+            price=item.price,
+            subtotal=item.price * 2,
+        )
+
+        self.client.login(username=seller.username, password="password123")
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "seller/dashboard.html")
+        self.assertEqual(len(response.context["category_hubs"]), 1)
+        self.assertEqual(response.context["seller_performance"]["orders_count"], 1)
 
 
 class CheckoutFlowTests(TestCase):

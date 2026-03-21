@@ -42,9 +42,46 @@ class Profile(models.Model):
         return SellerRating.objects.filter(seller=self.user).count()
 
 
+class MarketCategory(models.Model):
+    THEME_CITRUS = "citrus"
+    THEME_GARDEN = "garden"
+    THEME_DAIRY = "dairy"
+    THEME_GRAIN = "grain"
+    THEME_SPICE = "spice"
+    THEME_PANTRY = "pantry"
+    THEME_CHOICES = (
+        (THEME_CITRUS, "Citrus"),
+        (THEME_GARDEN, "Garden"),
+        (THEME_DAIRY, "Dairy"),
+        (THEME_GRAIN, "Grain"),
+        (THEME_SPICE, "Spice"),
+        (THEME_PANTRY, "Pantry"),
+    )
+
+    name = models.CharField(max_length=80, unique=True)
+    slug = models.SlugField(unique=True)
+    icon = models.CharField(max_length=40, default="bi-basket3")
+    description = models.CharField(max_length=180)
+    theme = models.CharField(max_length=20, choices=THEME_CHOICES, default=THEME_PANTRY)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Item(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="items"
+    )
+    category = models.ForeignKey(
+        MarketCategory,
+        on_delete=models.SET_NULL,
+        related_name="items",
+        blank=True,
+        null=True,
     )
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)

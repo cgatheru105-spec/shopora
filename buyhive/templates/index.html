@@ -58,6 +58,10 @@
             {% if marketplace_snapshot.average_price %}Ksh{{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
           </div>
         </div>
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Active categories</div>
+          <div class="bh-stat-value">{{ marketplace_snapshot.active_categories|default:0 }}</div>
+        </div>
       </div>
     </div>
   </section>
@@ -67,43 +71,57 @@
       <div class="bh-page-intro">
         <div>
           <div class="bh-kicker">Start here</div>
-          <h2 class="bh-section-title h4 mb-0">Shop by category</h2>
+          <h2 class="bh-section-title h4 mb-0">Shop by live aisle</h2>
         </div>
         <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">View all</a>
       </div>
 
-      <div class="row g-3">
-        <div class="col-6 col-md-3">
-          <a href="{% url 'items_public' %}?search=fruits" class="bh-category-card text-decoration-none">
-            <img alt="Fruits" src="https://img.icons8.com/color/96/apple.png">
-            <div class="fw-semibold">Fruits</div>
-            <div class="bh-category-note">Bright picks for breakfast bowls and snacks.</div>
-          </a>
+      {% if category_hubs %}
+        <div class="bh-category-grid">
+          {% for category in category_hubs %}
+            <a href="{{ category.browse_url }}" class="bh-category-card bh-category-card--{{ category.theme }} text-decoration-none">
+              <div class="bh-category-icon"><i class="bi {{ category.icon }}" aria-hidden="true"></i></div>
+              <div class="fw-semibold">{{ category.name }}</div>
+              <div class="bh-category-note">{{ category.description }}</div>
+              <div class="bh-category-meta">
+                {{ category.listing_count }} live · {{ category.seller_count }} seller{{ category.seller_count|pluralize }}
+                {% if category.average_price %}· Avg Ksh{{ category.average_price|floatformat:0 }}{% endif %}
+              </div>
+            </a>
+          {% endfor %}
         </div>
-        <div class="col-6 col-md-3">
-          <a href="{% url 'items_public' %}?search=vegetables" class="bh-category-card text-decoration-none">
-            <img alt="Vegetables" src="https://img.icons8.com/color/96/broccoli.png">
-            <div class="fw-semibold">Vegetables</div>
-            <div class="bh-category-note">Leafy greens and pantry staples for dinner prep.</div>
-          </a>
-        </div>
-        <div class="col-6 col-md-3">
-          <a href="{% url 'items_public' %}?search=dairy" class="bh-category-card text-decoration-none">
-            <img alt="Dairy" src="https://img.icons8.com/color/96/milk-bottle.png">
-            <div class="fw-semibold">Dairy</div>
-            <div class="bh-category-note">Daily essentials for tea, baking, and family meals.</div>
-          </a>
-        </div>
-        <div class="col-6 col-md-3">
-          <a href="{% url 'items_public' %}?search=grains" class="bh-category-card text-decoration-none">
-            <img alt="Grains" src="https://img.icons8.com/color/96/rice-bowl.png">
-            <div class="fw-semibold">Grains</div>
-            <div class="bh-category-note">Rice, flour, and filling favorites for practical carts.</div>
-          </a>
-        </div>
-      </div>
+      {% else %}
+        <div class="alert alert-info bh-surface mb-0">Categories will light up here as sellers structure more listings.</div>
+      {% endif %}
     </div>
   </section>
+
+  {% if market_radar %}
+    <section class="bh-section-wrapper mb-5" id="market-radar" aria-label="Market radar">
+      <div class="bh-section-shell bh-section-shell--showcase">
+        <div class="bh-page-intro">
+          <div>
+            <div class="bh-kicker">Originality layer</div>
+            <h2 class="bh-section-title h4 mb-0">Market radar</h2>
+            <p>Live marketplace signals generated from listings, wishlists, reviews, and orders in the database.</p>
+          </div>
+          <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Explore the data</a>
+        </div>
+
+        <div class="bh-radar-grid">
+          {% for signal in market_radar %}
+            <article class="bh-radar-card bh-radar-card--{{ signal.theme }}">
+              <div class="bh-kicker mb-2">{{ signal.eyebrow }}</div>
+              <h3 class="h5 mb-2">{{ signal.title }}</h3>
+              <div class="bh-radar-value">{{ signal.value }}</div>
+              <p class="mb-3">{{ signal.summary }}</p>
+              <a class="btn btn-outline-success btn-sm" href="{{ signal.href }}">{{ signal.cta }}</a>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
 
   <section class="bh-section-wrapper mb-5" id="popular-products" aria-label="Popular products">
     <div class="bh-section-shell bh-section-shell--showcase">
@@ -131,6 +149,9 @@
                   <div class="fw-semibold bh-product-name">{{ item.name }}</div>
                   <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
                   <div class="bh-card-meta mt-3">
+                    {% if item.category_name %}
+                      <span class="bh-mini-badge">{{ item.category_name }}</span>
+                    {% endif %}
                     <span class="bh-mini-badge">Popular</span>
                     <span class="bh-mini-badge">Fresh pick</span>
                   </div>

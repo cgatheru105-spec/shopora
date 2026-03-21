@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from .constants import FOUNDER_USERNAMES_BY_KEY
-from .models import Item, Profile, ItemReview, SellerRating
+from .models import Item, ItemReview, MarketCategory, Profile, SellerRating
 
 
 class RegisterForm(forms.Form):
@@ -110,11 +110,14 @@ class LoginForm(forms.Form):
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ("name", "description", "price", "is_available")
+        fields = ("name", "category", "description", "price", "is_available")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["name"].widget.attrs.update({"class": "form-control"})
+        self.fields["category"].queryset = MarketCategory.objects.order_by("name")
+        self.fields["category"].required = False
+        self.fields["category"].widget.attrs.update({"class": "form-select"})
         self.fields["description"].widget.attrs.update({"class": "form-control", "rows": 4})
         self.fields["price"].widget.attrs.update({"class": "form-control"})
         self.fields["is_available"].widget.attrs.update({"class": "form-check-input"})
@@ -130,8 +133,22 @@ class ProfilePictureForm(forms.ModelForm):
             )
         }
 
+    def clean_profile_picture(self):
+        file = self.cleaned_data.get("profile_picture")
+        if not file:
+            return file
+        content_type = getattr(file, "content_type", "") or ""
+        if not content_type.startswith("image/"):
+            raise ValidationError("Please upload an image file.")
+        return file
+
 
 class ItemFilterForm(forms.Form):
+    category = forms.ChoiceField(
+        required=False,
+        choices=(),
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
     search = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
@@ -174,6 +191,15 @@ class ItemFilterForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"})
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        category_choices = [("", "All categories")]
+        category_choices.extend(
+            (category.slug, category.name)
+            for category in MarketCategory.objects.order_by("name")
+        )
+        self.fields["category"].choices = category_choices
+
 
 class ItemReviewForm(forms.ModelForm):
     class Meta:
@@ -213,15 +239,6 @@ class AvailabilityFilterForm(forms.Form):
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
         label="Available items only"
     )
-
-    def clean_profile_picture(self):
-        file = self.cleaned_data.get("profile_picture")
-        if not file:
-            return file
-        content_type = getattr(file, "content_type", "") or ""
-        if not content_type.startswith("image/"):
-            raise ValidationError("Please upload an image file.")
-        return file
 
 
 class CheckoutForm(forms.Form):

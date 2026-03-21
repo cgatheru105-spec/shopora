@@ -80,6 +80,67 @@
       </article>
     </section>
 
+    <section class="row g-4">
+      <div class="col-lg-4">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Your activity</div>
+              <h2 class="bh-section-title h5 mb-0">Buyer signals</h2>
+              <p>Small stats that make the dashboard feel personal and useful.</p>
+            </div>
+          </div>
+
+          <div class="bh-mini-metric-grid">
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">{{ buyer_activity.wishlist_count|default:0 }}</div>
+              <div class="bh-mini-metric-label">Wishlist saves</div>
+            </article>
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">{{ buyer_activity.recently_viewed_count|default:0 }}</div>
+              <div class="bh-mini-metric-label">Recently viewed</div>
+            </article>
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">{{ buyer_activity.orders_count|default:0 }}</div>
+              <div class="bh-mini-metric-label">Orders placed</div>
+            </article>
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">
+                {% if buyer_activity.latest_order_id %}{{ buyer_activity.latest_order_id }}{% else %}-{% endif %}
+              </div>
+              <div class="bh-mini-metric-label">
+                {% if buyer_activity.latest_order_status %}{{ buyer_activity.latest_order_status }}{% else %}Latest order{% endif %}
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Market radar</div>
+              <h2 class="bh-section-title h5 mb-0">What the marketplace is saying</h2>
+              <p>Live signals powered by database activity, not static sample content.</p>
+            </div>
+          </div>
+
+          <div class="bh-radar-grid bh-radar-grid--compact">
+            {% for signal in market_radar %}
+              <article class="bh-radar-card bh-radar-card--{{ signal.theme }}">
+                <div class="bh-kicker mb-2">{{ signal.eyebrow }}</div>
+                <h3 class="h6 mb-2">{{ signal.title }}</h3>
+                <div class="bh-radar-value bh-radar-value--compact">{{ signal.value }}</div>
+                <p class="mb-3">{{ signal.summary }}</p>
+                <a class="btn btn-outline-success btn-sm" href="{{ signal.href }}">{{ signal.cta }}</a>
+              </article>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="bh-section-wrapper">
       <div class="bh-page-intro">
         <div>
@@ -89,6 +150,17 @@
         </div>
         <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">See all products</a>
       </div>
+
+      {% if category_hubs %}
+        <div class="bh-category-chip-row mb-4" aria-label="Buyer category shortcuts">
+          {% for category in category_hubs %}
+            <a href="{{ category.browse_url }}" class="bh-category-chip">
+              <i class="bi {{ category.icon }}" aria-hidden="true"></i>
+              <span>{{ category.name }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
 
       <div class="row g-3">
         {% for item in recommended_cards %}
@@ -103,6 +175,9 @@
                 <div class="fw-semibold bh-product-name">{{ item.name }}</div>
                 <div class="text-muted small">{{ item.description|truncatechars:90 }}</div>
                 <div class="bh-card-meta mt-3">
+                  {% if item.category_name %}
+                    <span class="bh-mini-badge">{{ item.category_name }}</span>
+                  {% endif %}
                   <span class="bh-mini-badge">Just added</span>
                 </div>
                 <div class="bh-price mt-2">Ksh{{ item.price }}</div>
@@ -158,6 +233,9 @@
                 <div class="bh-inline-item-copy">
                   <div class="fw-semibold">{{ item.name }}</div>
                   <div class="small text-muted">by {{ item.owner_username }}</div>
+                  {% if item.category_name %}
+                    <div class="bh-card-meta mt-2 mb-2"><span class="bh-mini-badge">{{ item.category_name }}</span></div>
+                  {% endif %}
                   <p>{{ item.description|truncatechars:72 }}</p>
                 </div>
                 <div class="bh-inline-item-actions">

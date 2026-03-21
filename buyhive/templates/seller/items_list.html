@@ -69,6 +69,7 @@
               <tr>
                 <th>Image</th>
                 <th>Name</th>
+                <th>Category</th>
                 <th>Price</th>
                 <th class="text-end">Actions</th>
               </tr>
@@ -87,6 +88,13 @@
                   {% endwith %}
                 </td>
                 <td>{{ item.name }}</td>
+                <td>
+                  {% if item.category %}
+                    <span class="bh-mini-badge">{{ item.category.name }}</span>
+                  {% else %}
+                    <span class="text-muted">Uncategorized</span>
+                  {% endif %}
+                </td>
                 <td>Ksh{{ item.price }}</td>
 
                 <td class="text-end">

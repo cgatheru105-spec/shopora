@@ -1,139 +1,221 @@
-{%extends 'base.html'%}
+{% extends 'base.html' %}
 {% load static %}
-{%block extra_head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-<link rel="stylesheet" href="{% static 'css/public.css' %}">
-{%endblock %}
-{%block content%}
-<div class="row">
-  <!-- Sidebar Navigation -->
-  <div class="col-md-3 mb-4">
-    <div class="bh-surface bh-dashboard-nav p-3">
-      <h5 class="mb-3">Navigation</h5>
-      <nav class="nav flex-column">
-        <a class="nav-link active" href="{% url 'seller_items' %}">
-          <i class="bi bi-box-seam me-2"></i>My Items
-        </a>
-        <a class="nav-link" href="{% url 'profile_edit' %}">
-          <i class="bi bi-person-gear me-2"></i>Edit Profile
-        </a>
-        <a class="nav-link" href="{% url 'items_public' %}">
-          <i class="bi bi-search me-2"></i>Browse Items
-        </a>
-        <a class="nav-link" href="{% url 'index' %}">
-          <i class="bi bi-house me-2"></i>Home
-        </a>
-        <hr class="my-3">
-        <a class="nav-link text-danger" href="{% url 'logout' %}">
-          <i class="bi bi-box-arrow-right me-2"></i>Logout
-        </a>
-      </nav>
-    </div>
-  </div>
 
-  <!-- Main Content -->
-  <div class="col-md-9">
-    <div class="bh-page-intro">
-      <div>
-        <div class="bh-kicker">Seller overview</div>
-        <h1 class="bh-page-title h3 mb-0">Seller Dashboard</h1>
-        <p>Track your catalog at a glance and keep your storefront tidy.</p>
-      </div>
-      {% if profile and profile.profile_picture %}
-        <img src="{{ profile.profile_picture.url }}" alt="Profile picture" class="bh-entity-avatar" style="width: 56px; height: 56px; object-fit: cover; border-radius: 999px;" />
-      {% endif %}
-    </div>
+{% block title %}Seller Dashboard · EcoMart Shopora{% endblock %}
 
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-      <div class="col-md-6 col-lg-3 mb-3">
-        <div class="bh-surface p-3 text-center">
-          <div class="h4 mb-1 text-success">{{ total_items }}</div>
-          <div class="text-muted small">Total Items</div>
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/public.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="bh-dashboard-stack">
+    <section class="bh-surface bh-dashboard-hero p-4 p-lg-5">
+      <div class="bh-page-intro mb-0">
+        <div>
+          <div class="bh-kicker">Seller studio</div>
+          <h1 class="bh-page-title h3 mb-0">Run your storefront with clarity</h1>
+          <p>Track inventory, see how the market is responding, and keep your best categories in focus.</p>
         </div>
-      </div>
-      <div class="col-md-6 col-lg-3 mb-3">
-        <div class="bh-surface p-3 text-center">
-          <div class="h4 mb-1 text-primary">${{ total_value|floatformat:2 }}</div>
-          <div class="text-muted small">Total Value</div>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3 mb-3">
-        <div class="bh-surface p-3 text-center">
-          <div class="h4 mb-1 text-primary">
-            {% if seller_snapshot.average_price %}Ksh{{ seller_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+        <div class="d-flex align-items-center gap-3">
+          {% if profile and profile.profile_picture %}
+            <img
+              src="{{ profile.profile_picture.url }}"
+              class="rounded-circle bh-entity-avatar"
+              width="72"
+              height="72"
+              alt="Profile picture"
+              style="object-fit: cover;"
+            >
+          {% else %}
+            <img
+              src="{% static 'images/logo.png' %}"
+              class="rounded-circle bh-entity-avatar"
+              width="72"
+              height="72"
+              alt="Profile picture"
+            >
+          {% endif %}
+          <div>
+            <div class="fw-semibold">{{ user.username }}</div>
+            <div class="text-muted small">{{ user.email }}</div>
           </div>
-          <div class="text-muted small">Average Price</div>
         </div>
       </div>
-      <div class="col-md-6 col-lg-3 mb-3">
-        <div class="bh-surface p-3 text-center">
-          <div class="h4 mb-1 text-warning">
-            {% if seller_snapshot.latest_listing %}{{ seller_snapshot.latest_listing|date:"M j" }}{% else %}-{% endif %}
-          </div>
-          <div class="text-muted small">Latest Listing</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Recent Items Slider -->
-    {% if recent_items %}
-    <div class="bh-surface p-4 mb-4">
-      <h5 class="mb-3">Recent Items</h5>
-      <div id="itemsCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-inner">
-          {% for item in recent_items %}
-          <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <div class="card border-0">
-              <div class="card-body text-center">
-                {% if item.images.all %}
-                  <img src="{{ item.images.first.image.url }}" alt="{{ item.name }}" class="img-fluid mb-3" style="max-height: 200px; object-fit: cover; border-radius: 8px;">
-                {% else %}
-                  <div class="bg-light d-flex align-items-center justify-content-center mb-3" style="height: 200px; border-radius: 8px;">
-                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
-                  </div>
-                {% endif %}
-                <h6 class="card-title">{{ item.name }}</h6>
-                <p class="card-text text-muted small">{{ item.description|truncatechars:100 }}</p>
-                <p class="h5 text-success mb-2">Ksh{{ item.price }}</p>
-                <a href="{% url 'seller_items' %}" class="btn btn-outline-primary btn-sm">View All Items</a>
-              </div>
+      <div class="bh-chip-row mt-4">
+        <a class="bh-chip text-decoration-none" href="{% url 'seller_item_create' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Add a listing
+        </a>
+        <a class="bh-chip text-decoration-none" href="{% url 'seller_items' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Manage inventory
+        </a>
+        <a class="bh-chip text-decoration-none" href="{% url 'profile_edit' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Edit profile
+        </a>
+      </div>
+    </section>
+
+    <section class="bh-snapshot-grid" aria-label="Seller overview">
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Live items</div>
+        <div class="bh-snapshot-value">{{ total_items }}</div>
+        <div class="bh-snapshot-note">Products currently in your storefront</div>
+      </article>
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Catalog value</div>
+        <div class="bh-snapshot-value">Ksh{{ total_value|floatformat:2 }}</div>
+        <div class="bh-snapshot-note">Total listed value across your inventory</div>
+      </article>
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Paid orders</div>
+        <div class="bh-snapshot-value">{{ seller_performance.orders_count|default:0 }}</div>
+        <div class="bh-snapshot-note">Completed or paid orders tied to your items</div>
+      </article>
+      <article class="bh-snapshot-card">
+        <div class="bh-snapshot-label">Revenue</div>
+        <div class="bh-snapshot-value">
+          {% if seller_performance.revenue %}Ksh{{ seller_performance.revenue|floatformat:2 }}{% else %}-{% endif %}
+        </div>
+        <div class="bh-snapshot-note">Captured from paid marketplace orders</div>
+      </article>
+    </section>
+
+    <section class="row g-4">
+      <div class="col-lg-4">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Engagement</div>
+              <h2 class="bh-section-title h5 mb-0">How buyers are responding</h2>
+              <p>These metrics come straight from the database activity around your listings.</p>
             </div>
           </div>
+
+          <div class="bh-mini-metric-grid">
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">{{ seller_engagement.wishlist_saves|default:0 }}</div>
+              <div class="bh-mini-metric-label">Wishlist saves</div>
+            </article>
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">{{ seller_engagement.reviews_count|default:0 }}</div>
+              <div class="bh-mini-metric-label">Reviews received</div>
+            </article>
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">
+                {% if seller_engagement.average_rating %}{{ seller_engagement.average_rating|floatformat:1 }}/5{% else %}-{% endif %}
+              </div>
+              <div class="bh-mini-metric-label">Average rating</div>
+            </article>
+            <article class="bh-mini-metric-card">
+              <div class="bh-mini-metric-value">
+                {% if seller_performance.units_sold %}{{ seller_performance.units_sold }}{% else %}0{% endif %}
+              </div>
+              <div class="bh-mini-metric-label">Units sold</div>
+            </article>
+          </div>
+
+          <div class="bh-inline-note mt-4">
+            <div class="small text-muted">Average listing price</div>
+            <div class="fw-semibold">
+              {% if seller_snapshot.average_price %}Ksh{{ seller_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
+            </div>
+          </div>
+          <div class="bh-inline-note mt-3">
+            <div class="small text-muted">Latest listing</div>
+            <div class="fw-semibold">
+              {% if seller_snapshot.latest_listing %}{{ seller_snapshot.latest_listing|date:"M j, Y" }}{% else %}-{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="bh-surface p-4 h-100">
+          <div class="bh-page-intro">
+            <div>
+              <div class="bh-kicker">Structured catalog</div>
+              <h2 class="bh-section-title h5 mb-0">Your strongest aisles</h2>
+              <p>Category-driven organization makes the project look more intentional and helps buyers browse faster.</p>
+            </div>
+            <a class="btn btn-outline-success btn-sm" href="{% url 'seller_items' %}">Open inventory</a>
+          </div>
+
+          {% if category_hubs %}
+            <div class="bh-category-grid bh-category-grid--compact">
+              {% for category in category_hubs %}
+                <a href="{{ category.browse_url }}" class="bh-category-card bh-category-card--{{ category.theme }} text-decoration-none">
+                  <div class="bh-category-icon"><i class="bi {{ category.icon }}" aria-hidden="true"></i></div>
+                  <div class="fw-semibold">{{ category.name }}</div>
+                  <div class="bh-category-note">{{ category.listing_count }} listing{{ category.listing_count|pluralize }} · {{ category.available_count }} available</div>
+                  <div class="bh-category-meta">
+                    {% if category.average_price %}Avg Ksh{{ category.average_price|floatformat:0 }}{% else %}Ready for more stock{% endif %}
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="bh-empty-state mb-0">
+              <div class="bh-empty-state-icon"><i class="bi bi-tags"></i></div>
+              <h2 class="bh-empty-state-title">No categorized items yet</h2>
+              <p class="bh-empty-state-description">Add a category when you create a product and your storefront intelligence will appear here.</p>
+              <a href="{% url 'seller_item_create' %}" class="btn btn-success">Create a listing</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="bh-section-wrapper">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Recent inventory</div>
+          <h2 class="bh-section-title h5 mb-0">Latest listings</h2>
+          <p>Quick access to the most recent products in your storefront.</p>
+        </div>
+        <a class="btn btn-outline-success btn-sm" href="{% url 'seller_items' %}">View all items</a>
+      </div>
+
+      {% if recent_items %}
+        <div class="row g-3">
+          {% for item in recent_items %}
+            <div class="col-12 col-md-6 col-xl-4">
+              <article class="card bh-product-card h-100">
+                {% with first_image=item.images.first %}
+                  {% if first_image %}
+                    <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+                  {% endif %}
+                {% endwith %}
+                <div class="card-body">
+                  <div class="bh-card-meta mb-2">
+                    {% if item.category %}
+                      <span class="bh-mini-badge">{{ item.category.name }}</span>
+                    {% endif %}
+                    {% if item.is_available %}
+                      <span class="bh-mini-badge">Available</span>
+                    {% else %}
+                      <span class="bh-mini-badge">Paused</span>
+                    {% endif %}
+                  </div>
+                  <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                  <div class="text-muted small">{{ item.description|truncatechars:88 }}</div>
+                  <div class="bh-price mt-2">Ksh{{ item.price }}</div>
+                </div>
+                <div class="card-footer bg-transparent border-0 bh-card-footer">
+                  <small class="text-muted">Listed {{ item.created_at|date:"M j, Y" }}</small>
+                  <div class="bh-card-actions">
+                    <a href="{% url 'seller_item_update' item.pk %}" class="btn btn-outline-success btn-sm">Edit</a>
+                    <a href="{% url 'seller_item_delete' item.pk %}" class="btn btn-outline-secondary btn-sm">Delete</a>
+                  </div>
+                </div>
+              </article>
+            </div>
           {% endfor %}
         </div>
-        {% if recent_items|length > 1 %}
-        <button class="carousel-control-prev" type="button" data-bs-target="#itemsCarousel" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#itemsCarousel" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Next</span>
-        </button>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- Quick Actions -->
-    <div class="bh-surface p-4">
-      <h5 class="mb-3">Quick Actions</h5>
-      <div class="row g-3">
-        <div class="col-md-6">
-          <a href="{% url 'seller_item_create' %}" class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2">
-            <i class="bi bi-plus-circle"></i>
-            Add New Item
-          </a>
-        </div>
-        <div class="col-md-6">
-          <a href="{% url 'items_public' %}" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
-            <i class="bi bi-search"></i>
-            Browse Marketplace
-          </a>
-        </div>
-      </div>
-    </div>
+      {% else %}
+        <div class="alert alert-info bh-surface mb-0">Your storefront is empty right now. Add a listing to start filling the dashboard with live data.</div>
+      {% endif %}
+    </section>
   </div>
-</div>
-{%endblock%}
+{% endblock %}

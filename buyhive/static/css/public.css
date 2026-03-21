@@ -1557,6 +1557,208 @@ html[data-bh-theme="dark"] .bh-feature-icon--warn{
   line-height: 1.65;
 }
 
+.bh-category-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.bh-category-grid--compact{
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.bh-category-icon{
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  font-size: 1.6rem;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--bh-accent-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.bh-category-meta{
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--bh-muted);
+}
+
+.bh-category-card--citrus{
+  background:
+    radial-gradient(circle at top right, rgba(253, 186, 116, 0.34), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 245, 231, 0.92));
+}
+
+.bh-category-card--garden{
+  background:
+    radial-gradient(circle at top right, rgba(110, 231, 183, 0.28), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 252, 244, 0.92));
+}
+
+.bh-category-card--dairy{
+  background:
+    radial-gradient(circle at top right, rgba(191, 219, 254, 0.30), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.92));
+}
+
+.bh-category-card--grain{
+  background:
+    radial-gradient(circle at top right, rgba(253, 224, 71, 0.28), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 235, 0.92));
+}
+
+.bh-category-card--spice{
+  background:
+    radial-gradient(circle at top right, rgba(251, 146, 60, 0.24), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 243, 234, 0.92));
+}
+
+.bh-category-card--pantry{
+  background:
+    radial-gradient(circle at top right, rgba(192, 132, 252, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 244, 255, 0.92));
+}
+
+.bh-radar-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.bh-radar-grid--compact{
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.bh-radar-card{
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 245, 0.92));
+  box-shadow: 0 18px 34px rgba(17, 24, 39, 0.06);
+}
+
+.bh-radar-card::before{
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(25, 135, 84, 0.18), rgba(25, 135, 84, 0.62), rgba(244, 197, 66, 0.42));
+}
+
+.bh-radar-card--citrus{
+  background:
+    radial-gradient(circle at top right, rgba(253, 186, 116, 0.30), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 245, 231, 0.92));
+}
+
+.bh-radar-card--garden{
+  background:
+    radial-gradient(circle at top right, rgba(134, 239, 172, 0.28), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 252, 244, 0.92));
+}
+
+.bh-radar-card--dairy{
+  background:
+    radial-gradient(circle at top right, rgba(147, 197, 253, 0.24), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 247, 255, 0.92));
+}
+
+.bh-radar-card--grain{
+  background:
+    radial-gradient(circle at top right, rgba(250, 204, 21, 0.22), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 235, 0.92));
+}
+
+.bh-radar-card--spice{
+  background:
+    radial-gradient(circle at top right, rgba(251, 146, 60, 0.24), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 243, 234, 0.92));
+}
+
+.bh-radar-card--pantry{
+  background:
+    radial-gradient(circle at top right, rgba(192, 132, 252, 0.18), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 244, 255, 0.92));
+}
+
+.bh-radar-value{
+  margin-bottom: 10px;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--bh-accent-deep);
+}
+
+.bh-radar-value--compact{
+  font-size: 1rem;
+}
+
+.bh-category-chip-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bh-category-chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--bh-border);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--bh-text);
+  text-decoration: none;
+  transition: all 220ms ease;
+}
+
+.bh-category-chip:hover,
+.bh-category-chip.is-active{
+  color: var(--bh-accent-deep);
+  border-color: rgba(25, 135, 84, 0.18);
+  background: rgba(25, 135, 84, 0.08);
+  box-shadow: 0 14px 28px rgba(25, 135, 84, 0.12);
+}
+
+.bh-mini-metric-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.bh-mini-metric-card{
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--bh-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 245, 0.88));
+}
+
+.bh-mini-metric-value{
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--bh-accent-deep);
+  word-break: break-word;
+}
+
+.bh-mini-metric-label{
+  margin-top: 4px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--bh-muted);
+}
+
+.bh-inline-note{
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--bh-border);
+  background: rgba(255, 255, 255, 0.64);
+}
+
 html[data-bh-theme="dark"] .bh-hero{
   border-color: rgba(255, 255, 255, 0.08);
   background-image:
@@ -1575,7 +1777,10 @@ html[data-bh-theme="dark"] .bh-product-card,
 html[data-bh-theme="dark"] .bh-results-toolbar,
 html[data-bh-theme="dark"] .bh-filter-shell,
 html[data-bh-theme="dark"] .bh-inline-item,
-html[data-bh-theme="dark"] .bh-spotlight-card{
+html[data-bh-theme="dark"] .bh-spotlight-card,
+html[data-bh-theme="dark"] .bh-radar-card,
+html[data-bh-theme="dark"] .bh-mini-metric-card,
+html[data-bh-theme="dark"] .bh-inline-note{
   border-color: rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(14, 24, 40, 0.96), rgba(12, 21, 36, 0.92));
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.24);
@@ -1583,6 +1788,17 @@ html[data-bh-theme="dark"] .bh-spotlight-card{
 
 html[data-bh-theme="dark"] .bh-category-note{
   color: #9fb0c8;
+}
+
+html[data-bh-theme="dark"] .bh-category-meta,
+html[data-bh-theme="dark"] .bh-mini-metric-label{
+  color: #9fb0c8;
+}
+
+html[data-bh-theme="dark"] .bh-category-icon,
+html[data-bh-theme="dark"] .bh-category-chip{
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 html[data-bh-theme="dark"] .bh-filter-head,
@@ -1607,5 +1823,9 @@ html[data-bh-theme="dark"] .bh-quick-filter.is-active{
 
   .bh-inline-item{
     grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .bh-mini-metric-grid{
+    grid-template-columns: 1fr;
   }
 }

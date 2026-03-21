@@ -46,6 +46,18 @@
         </a>
       </div>
 
+      {% if category_hubs %}
+        <div class="bh-category-chip-row" aria-label="Browse by category">
+          <a href="{% url 'items_public' %}" class="bh-category-chip {% if not active_category %}is-active{% endif %}">All aisles</a>
+          {% for category in category_hubs %}
+            <a href="{{ category.browse_url }}" class="bh-category-chip {% if active_category and active_category.slug == category.slug %}is-active{% endif %}">
+              <i class="bi {{ category.icon }}" aria-hidden="true"></i>
+              <span>{{ category.name }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <div class="row g-4 mb-4">
         <div class="col-lg-3">
           <form method="get" class="bh-surface bh-filter-shell" id="filterForm">
@@ -55,6 +67,11 @@
                 <h2 class="h5 mb-0">Filters</h2>
               </div>
               <span class="bh-mini-badge">{{ items_count }} visible</span>
+            </div>
+
+            <div class="bh-filter-group">
+              <label for="{{ filter_form.category.id_for_label }}" class="bh-filter-label">Aisle</label>
+              {{ filter_form.category }}
             </div>
 
             <div class="bh-filter-group">
@@ -104,6 +121,8 @@
                   Listings from active sellers with broader storefronts
                 {% elif quick_filter == "fresh" %}
                   Recently added products across the marketplace
+                {% elif active_category %}
+                  Live listings in the {{ active_category.name }} aisle
                 {% elif available_only %}
                   Showing only items that are currently available
                 {% else %}
@@ -135,6 +154,12 @@
                         <span class="bh-status-badge bh-status-unavailable">Out of Stock</span>
                       {% else %}
                         <span class="bh-status-badge bh-status-available">In Stock</span>
+                      {% endif %}
+
+                      {% if item.category_name %}
+                        <div class="bh-card-meta mb-2">
+                          <span class="bh-mini-badge">{{ item.category_name }}</span>
+                        </div>
                       {% endif %}
                       
                       <h5 class="card-title">{{ item.name }}</h5>
