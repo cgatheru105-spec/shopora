@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +27,35 @@ SECRET_KEY = 'django-insecure-n9!(xa6$njr41_^i4i1q^%^&z2r1bi@m-=6%cnx_uote%2p2h*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+def _split_csv_env(name):
+    raw_value = (os.getenv(name, "") or "").strip()
+    if not raw_value:
+        return []
+    return [value.strip() for value in raw_value.split(",") if value.strip()]
+
+
+def _append_unique(values, candidate):
+    if candidate and candidate not in values:
+        values.append(candidate)
+
+
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    ".ngrok-free.dev",
+    ".ngrok.app",
+]
+for allowed_host in _split_csv_env("DJANGO_ALLOWED_HOSTS"):
+    _append_unique(ALLOWED_HOSTS, allowed_host)
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1",
+    "http://localhost",
+    "https://*.ngrok-free.dev",
+    "https://*.ngrok.app",
+]
+for trusted_origin in _split_csv_env("DJANGO_CSRF_TRUSTED_ORIGINS"):
+    _append_unique(CSRF_TRUSTED_ORIGINS, trusted_origin)
 
 
 # Application definition
@@ -115,7 +145,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -130,4 +160,15 @@ MPESA_CONSUMER_KEY = 'dxD2MGyUL0qLtYLkikrN1Gqko2NPGcU6KGJLGXkk4Vmx9G0C'
 MPESA_CONSUMER_SECRET = 'AYl37HUkSu8ssBbWiJh2jVexCAlGeN7bGhm36TBAYxRpPMW69nVLtCF9rej8hGZU'
 MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
 MPESA_BUSINESS_SHORTCODE = '174379'  # Sandbox shortcode
-MPESA_CALLBACK_URL = 'https://trepidly-unobstinate-alivia.ngrok-free.dev/api/mpesa/callback/'
+MPESA_CALLBACK_URL = os.getenv(
+    'MPESA_CALLBACK_URL',
+    'https://trepidly-unobstinate-alivia.ngrok-free.dev/api/mpesa/callback/',
+)
+
+callback_origin = ""
+parsed_callback_url = urlparse(MPESA_CALLBACK_URL)
+if parsed_callback_url.scheme and parsed_callback_url.netloc:
+    callback_origin = f"{parsed_callback_url.scheme}://{parsed_callback_url.netloc}"
+    _append_unique(CSRF_TRUSTED_ORIGINS, callback_origin)
+    if parsed_callback_url.hostname:
+        _append_unique(ALLOWED_HOSTS, parsed_callback_url.hostname)
