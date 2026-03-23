@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block navbar %}
+
+<nav class="navbar navbar-expand-lg bh-navbar" aria-label="Seller workspace">
+  <div class="container">
+    <div class="bh-navbar-shell">
+      <a class="navbar-brand bh-navbar-brand d-flex align-items-center gap-3" href="{% url 'dashboard' %}">
+        <span class="bh-brand-mark" aria-hidden="true"></span>
+        <span class="bh-brand-copy">
+          <span class="bh-brand-title">EcoMart Shopora</span>
+          <span class="bh-brand-subtitle">Seller workspace</span>
+        </span>
+      </a>
+
+      <button class="navbar-toggler bh-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sellerTopnav" aria-controls="sellerTopnav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="collapse navbar-collapse bh-navbar-collapse" id="sellerTopnav">
+        <ul class="navbar-nav bh-navbar-links">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'seller_items' %}">Inventory</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'seller_stock_management' %}">Stock</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="{% url 'seller_notifications' %}">Notifications</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile_edit' %}">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+          </li>
+        </ul>
+
+        <div class="bh-navbar-actions">
+          <a class="btn bh-navbar-action bh-navbar-action-strong" href="{% url 'seller_item_create' %}">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+            <span>Add item</span>
+          </a>
+          <a class="btn bh-navbar-action bh-navbar-action-muted" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+{% endblock %}
+
+{% block content %}
+
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Seller workspace</div>
+      <h2 class="bh-page-title h3 mb-0">Notifications</h2>
+      <p>Stay updated with important alerts about your sold products and orders.</p>
+    </div>
+    <div>
+      {% if unread_count > 0 %}
+        <form method="post" action="{% url 'seller_notification_mark_all_read' %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-check-all"></i> Mark All as Read
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} shadow-sm" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Unread Count Badge -->
+  {% if unread_count > 0 %}
+    <div class="alert alert-info shadow-sm">
+      <i class="bi bi-bell"></i>
+      You have <strong>{{ unread_count }}</strong> unread notification{{ unread_count|pluralize }}.
+    </div>
+  {% endif %}
+
+  <!-- Notifications List -->
+  {% if page_obj %}
+    <div class="bh-surface">
+      {% for notification in page_obj %}
+        <div class="bh-notification-item {% if not notification.is_read %}bh-notification-unread{% endif %} p-3 border-bottom">
+          <div class="row align-items-start">
+            <div class="col">
+              <div class="d-flex align-items-start gap-3">
+                <!-- Icon -->
+                <div class="flex-shrink-0">
+                  {% if notification.notification_type == 'product_sold' %}
+                    <i class="bi bi-bag-check text-success" style="font-size: 1.5rem;"></i>
+                  {% elif notification.notification_type == 'stock_low' %}
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 1.5rem;"></i>
+                  {% elif notification.notification_type == 'order_placed' %}
+                    <i class="bi bi-cart-check text-primary" style="font-size: 1.5rem;"></i>
+                  {% elif notification.notification_type == 'order_cancelled' %}
+                    <i class="bi bi-x-circle text-danger" style="font-size: 1.5rem;"></i>
+                  {% elif notification.notification_type == 'review_received' %}
+                    <i class="bi bi-star-fill text-warning" style="font-size: 1.5rem;"></i>
+                  {% else %}
+                    <i class="bi bi-bell text-muted" style="font-size: 1.5rem;"></i>
+                  {% endif %}
+                </div>
+
+                <!-- Content -->
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <h6 class="mb-0">
+                      {% if not notification.is_read %}
+                        <span class="badge bg-primary me-2">New</span>
+                      {% endif %}
+                      {{ notification.title }}
+                    </h6>
+                    <small class="text-muted">
+                      {{ notification.created_at|timesince }} ago
+                    </small>
+                  </div>
+                  
+                  <div class="mb-2 text-muted">{{ notification.message|linebreaks }}</div>
+
+                  <!-- Additional Info -->
+                  {% if notification.item %}
+                    <small class="d-block mb-2">
+                      <i class="bi bi-box"></i>
+                      <strong>Product:</strong> {{ notification.item.name }}
+                    </small>
+                  {% endif %}
+
+                  {% if notification.order %}
+                    <small class="d-block mb-2">
+                      <i class="bi bi-receipt"></i>
+                      <strong>Order ID:</strong> {{ notification.order.order_id }}
+                    </small>
+                  {% endif %}
+
+                  {% if notification.order_item %}
+                    <small class="d-block mb-2">
+                      <i class="bi bi-graph-up"></i>
+                      <strong>Quantity:</strong> {{ notification.order_item.quantity }} unit{{ notification.order_item.quantity|pluralize }}
+                    </small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="col-auto">
+              {% if not notification.is_read %}
+                <a class="btn btn-sm btn-outline-primary" 
+                   href="{% url 'seller_notification_mark_read' notification.id %}?next={% url 'seller_notifications' %}">
+                  <i class="bi bi-check-circle"></i> Mark Read
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <nav aria-label="Notifications pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1">First</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+              </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'4' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+
+  {% else %}
+    <div class="alert alert-info shadow-sm bh-empty-state">
+      <i class="bi bi-inbox"></i> No notifications yet. When customers order your products, you'll see notifications here.
+    </div>
+  {% endif %}
+
+  <!-- CSS for Unread Notification Styling -->
+  <style>
+    .bh-notification-unread {
+      background-color: #f0f7ff;
+      border-left: 4px solid #0d6efd;
+    }
+  </style>
+
+{% endblock %}

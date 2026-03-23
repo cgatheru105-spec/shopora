@@ -110,7 +110,7 @@ class LoginForm(forms.Form):
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ("name", "category", "description", "price", "is_available")
+        fields = ("name", "category", "description", "price")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -120,7 +120,6 @@ class ItemForm(forms.ModelForm):
         self.fields["category"].widget.attrs.update({"class": "form-select"})
         self.fields["description"].widget.attrs.update({"class": "form-control", "rows": 4})
         self.fields["price"].widget.attrs.update({"class": "form-control"})
-        self.fields["is_available"].widget.attrs.update({"class": "form-check-input"})
 
 
 class ProfilePictureForm(forms.ModelForm):
@@ -279,3 +278,25 @@ class CheckoutForm(forms.Form):
         if len(digits) < 10:
             raise ValidationError("Please enter a valid phone number.")
         return phone
+
+
+class StockUpdateForm(forms.Form):
+    """Form for adding stock to an item"""
+    quantity = forms.IntegerField(
+        min_value=1,
+        max_value=10000,
+        widget=forms.NumberInput(attrs={
+            "class": "form-control",
+            "placeholder": "Quantity to add",
+            "min": "1"
+        }),
+        help_text="Enter the quantity to add to current stock"
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "form-control",
+            "rows": 2,
+            "placeholder": "Optional notes about this stock addition"
+        })
+    )

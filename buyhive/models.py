@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 class Profile(models.Model):
@@ -86,6 +87,7 @@ class Item(models.Model):
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField(default=10, help_text="Available quantity in stock")
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -304,3 +306,43 @@ class PaymentLog(models.Model):
 
     def __str__(self) -> str:
         return f"{self.payment.order.order_id} - {self.event}"
+
+
+class SellerNotification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('product_sold', 'Product Sold'),
+        ('stock_low', 'Stock Low'),
+        ('order_placed', 'Order Placed'),
+        ('order_cancelled', 'Order Cancelled'),
+        ('review_received', 'Review Received'),
+    )
+
+    seller = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="seller_notifications"
+    )
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    
+    # Related objects
+    item = models.ForeignKey(Item, on_delete=models.SET_NULL, null=True, blank=True, related_name="notifications")
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name="seller_notifications")
+    order_item = models.ForeignKey(OrderItem, on_delete=models.SET_NULL, null=True, blank=True, related_name="seller_notifications")
+    
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "Seller Notifications"
+
+    def __str__(self) -> str:
+        return f"{self.seller.username} - {self.get_notification_type_display()}"
+
+    def mark_as_read(self):
+        """Mark notification as read"""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save()

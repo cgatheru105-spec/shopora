@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Item, MarketCategory, Profile
+from .models import Item, MarketCategory, Profile, SellerNotification
 
 
 @admin.register(MarketCategory)
@@ -21,7 +21,21 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "price", "owner", "is_available", "created_at")
+    list_display = ("name", "category", "price", "stock", "owner", "is_available", "created_at")
     list_select_related = ("owner", "category")
     search_fields = ("name", "category__name", "owner__username", "owner__email")
     list_filter = ("category", "is_available", "created_at")
+
+
+@admin.register(SellerNotification)
+class SellerNotificationAdmin(admin.ModelAdmin):
+    list_display = ("seller", "notification_type", "title", "is_read", "created_at")
+    list_select_related = ("seller", "item", "order")
+    search_fields = ("seller__username", "title", "message")
+    list_filter = ("notification_type", "is_read", "created_at")
+    readonly_fields = ("created_at", "read_at")
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # Editing an existing notification
+            return self.readonly_fields + ("seller", "notification_type", "title", "message", "item", "order", "order_item")
+        return self.readonly_fields

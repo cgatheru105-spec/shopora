@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block navbar %}
+
+<nav class="navbar navbar-expand-lg bh-navbar" aria-label="Seller workspace">
+  <div class="container">
+    <div class="bh-navbar-shell">
+      <a class="navbar-brand bh-navbar-brand d-flex align-items-center gap-3" href="{% url 'dashboard' %}">
+        <span class="bh-brand-mark" aria-hidden="true"></span>
+        <span class="bh-brand-copy">
+          <span class="bh-brand-title">EcoMart Shopora</span>
+          <span class="bh-brand-subtitle">Seller workspace</span>
+        </span>
+      </a>
+
+      <button class="navbar-toggler bh-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sellerTopnav" aria-controls="sellerTopnav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="collapse navbar-collapse bh-navbar-collapse" id="sellerTopnav">
+        <ul class="navbar-nav bh-navbar-links">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'seller_items' %}">Inventory</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="{% url 'seller_stock_management' %}">Stock</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'seller_notifications' %}">Notifications</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile_edit' %}">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+          </li>
+        </ul>
+
+        <div class="bh-navbar-actions">
+          <a class="btn bh-navbar-action bh-navbar-action-strong" href="{% url 'seller_item_create' %}">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+            <span>Add item</span>
+          </a>
+          <a class="btn bh-navbar-action bh-navbar-action-muted" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+{% endblock %}
+
+{% block content %}
+
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Seller workspace</div>
+      <h2 class="bh-page-title h3 mb-0">Add Stock</h2>
+      <p>Increase the available stock for your product.</p>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} shadow-sm" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="bh-surface p-4">
+        
+        <!-- Product Information Card -->
+        <div class="alert alert-light border mb-4">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              {% with first_image=item.images.first %}
+                {% if first_image %}
+                  <img src="{{ first_image.image.url }}" alt="Item image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />
+                {% else %}
+                  <div style="width: 80px; height: 80px; background-color: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-image text-muted"></i>
+                  </div>
+                {% endif %}
+              {% endwith %}
+            </div>
+            <div class="col">
+              <h5 class="mb-1">{{ item.name }}</h5>
+              <p class="mb-0 text-muted">
+                Price: <strong>Ksh{{ item.price }}</strong>
+              </p>
+              <p class="mb-0 text-muted">
+                Current Stock: 
+                <strong>
+                  {% if item.stock == 0 %}
+                    <span class="badge bg-danger">{{ item.stock }} units (Out of Stock)</span>
+                  {% elif item.stock <= 5 %}
+                    <span class="badge bg-warning text-dark">{{ item.stock }} units (Low Stock)</span>
+                  {% else %}
+                    <span class="badge bg-success">{{ item.stock }} units</span>
+                  {% endif %}
+                </strong>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Update Form -->
+        <form method="post" class="needs-validation">
+          {% csrf_token %}
+          
+          <h5 class="mb-3">Add Stock</h5>
+
+          <div class="mb-3">
+            <label for="{{ form.quantity.id_for_label }}" class="form-label">
+              Quantity to Add
+              <span class="text-danger">*</span>
+            </label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.quantity.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+            <small class="form-text text-muted d-block mt-1">
+              <i class="bi bi-info-circle"></i>
+              {{ form.quantity.help_text|safe }}
+            </small>
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.notes.id_for_label }}" class="form-label">
+              Notes (Optional)
+            </label>
+            {{ form.notes }}
+            {% if form.notes.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.notes.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+            <small class="form-text text-muted d-block mt-1">
+              Add internal notes about this stock addition for your reference.
+            </small>
+          </div>
+
+          <div class="alert alert-info alert-sm">
+            <i class="bi bi-lightbulb"></i>
+            <strong>Note:</strong> After you add these units, your total stock for "{{ item.name }}" will be <strong>{{ item.stock }} + your quantity</strong> units.
+          </div>
+
+          <div class="d-grid gap-2 d-sm-flex">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-check-circle"></i> Add Stock
+            </button>
+            <a href="{% url 'seller_stock_management' %}" class="btn btn-secondary btn-lg">
+              <i class="bi bi-x-circle"></i> Cancel
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-md-4">
+      <div class="bh-surface p-4">
+        <h5 class="mb-3">Stock Management Tips</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <span class="ms-2">Keep your stock updated to avoid over-selling.</span>
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <span class="ms-2">When your stock reaches zero, your item becomes unavailable.</span>
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <span class="ms-2">Monitor low stock alerts in your notifications.</span>
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <span class="ms-2">Stock is automatically reduced when items are ordered.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

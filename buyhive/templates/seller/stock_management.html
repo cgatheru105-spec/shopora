@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block navbar %}
+
+<nav class="navbar navbar-expand-lg bh-navbar" aria-label="Seller workspace">
+  <div class="container">
+    <div class="bh-navbar-shell">
+      <a class="navbar-brand bh-navbar-brand d-flex align-items-center gap-3" href="{% url 'dashboard' %}">
+        <span class="bh-brand-mark" aria-hidden="true"></span>
+        <span class="bh-brand-copy">
+          <span class="bh-brand-title">EcoMart Shopora</span>
+          <span class="bh-brand-subtitle">Seller workspace</span>
+        </span>
+      </a>
+
+      <button class="navbar-toggler bh-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sellerTopnav" aria-controls="sellerTopnav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="collapse navbar-collapse bh-navbar-collapse" id="sellerTopnav">
+        <ul class="navbar-nav bh-navbar-links">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'seller_items' %}">Inventory</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="{% url 'seller_stock_management' %}">Stock</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'seller_notifications' %}">Notifications</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profile_edit' %}">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+          </li>
+        </ul>
+
+        <div class="bh-navbar-actions">
+          <a class="btn bh-navbar-action bh-navbar-action-strong" href="{% url 'seller_item_create' %}">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i>
+            <span>Add item</span>
+          </a>
+          <a class="btn bh-navbar-action bh-navbar-action-muted" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+{% endblock %}
+
+{% block content %}
+
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Seller workspace</div>
+      <h2 class="bh-page-title h3 mb-0">Stock Management</h2>
+      <p>Monitor and update your product stock levels to keep your inventory current.</p>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} shadow-sm" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if items %}
+    <div class="bh-surface p-3 p-md-4">
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th class="text-center">Current Stock</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for item in items %}
+              <tr>
+                <td style="width: 72px;">
+                  {% with first_image=item.images.first %}
+                    {% if first_image %}
+                      <img src="{{ first_image.image.url }}" alt="Item image" style="width: 56px; height: 56px; object-fit: cover; border-radius: 8px;" />
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                <td>
+                  <strong>{{ item.name }}</strong>
+                </td>
+                <td>
+                  {% if item.category %}
+                    <span class="bh-mini-badge">{{ item.category.name }}</span>
+                  {% else %}
+                    <span class="text-muted">Uncategorized</span>
+                  {% endif %}
+                </td>
+                <td>Ksh{{ item.price }}</td>
+                <td class="text-center">
+                  <span class="badge {% if item.stock > 10 %}bg-success{% elif item.stock > 5 %}bg-warning{% else %}bg-danger{% endif %}">
+                    {{ item.stock }} units
+                  </span>
+                </td>
+                <td>
+                  {% if item.stock == 0 %}
+                    <span class="badge bg-danger">Out of Stock</span>
+                  {% elif item.stock <= 5 %}
+                    <span class="badge bg-warning text-dark">Low Stock</span>
+                  {% elif item.stock <= 10 %}
+                    <span class="badge bg-info">Moderate Stock</span>
+                  {% else %}
+                    <span class="badge bg-success">Good Stock</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{% url 'seller_item_stock_update' item.pk %}">
+                     <i class="bi bi-plus-circle"></i> Add Stock
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
+        </div>
+
+    </div>
+
+  {% else %}
+    <div class="alert alert-info shadow-sm bh-empty-state">
+      <i class="bi bi-info-circle"></i> No items yet. <a href="{% url 'seller_item_create' %}">Create your first item</a>
+    </div>
+  {% endif %}
+
+{% endblock %}

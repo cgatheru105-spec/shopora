@@ -17,11 +17,11 @@ from urllib.parse import urlencode
 from .constants import FOUNDER_USERNAMES, FOUNDER_USERNAMES_BY_KEY
 from .forms import (
     AvailabilityFilterForm, CheckoutForm, ItemFilterForm, ItemForm, ItemReviewForm,
-    LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm
+    LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm, StockUpdateForm
 )
 from .models import (
     Item, ItemImage, ItemReview, MarketCategory, Order, OrderItem, Payment,
-    PaymentLog, Profile, RecentlyViewed, SellerRating, Wishlist
+    PaymentLog, Profile, RecentlyViewed, SellerRating, SellerNotification, Wishlist
 )
 from .mpesa_utils import MPESAConfigurationError, create_mpesa_client
 
@@ -1118,13 +1118,31 @@ def checkout(request):
                 )
 
                 for cart_item in cart_items:
-                    OrderItem.objects.create(
+                    order_item = OrderItem.objects.create(
                         order=order,
                         item=cart_item["item"],
                         seller=cart_item["item"].owner,
                         quantity=cart_item["quantity"],
                         price=cart_item["item"].price,
                         subtotal=cart_item["subtotal"],
+                    )
+                    
+                    # Decrease item stock
+                    item = cart_item["item"]
+                    item.stock -= cart_item["quantity"]
+                    if item.stock < 0:
+                        item.stock = 0
+                    item.save()
+                    
+                    # Create notification for seller
+                    _create_seller_notification(
+                        seller=cart_item["item"].owner,
+                        notification_type='product_sold',
+                        title=f'Product Sold: {item.name}',
+                        message=f'Your product "{item.name}" has been ordered by {order.buyer_name}.\n\nOrder Details:\n• Quantity: {cart_item["quantity"]}\n• Phone: {order.phone_number}\n• Delivery Address: {order.delivery_address}\n• Order ID: {order.order_id}',
+                        item=item,
+                        order=order,
+                        order_item=order_item,
                     )
 
                 Payment.objects.create(
@@ -1403,3 +1421,137 @@ def order_detail(request, order_id):
         'order': order,
         'order_items': order_items,
     })
+
+
+# ==================== Stock Management Views ====================
+
+@login_required
+def seller_stock_management(request):
+    """View for seller to manage stock for their items"""
+    if not _seller_required(request):
+        raise Http404()
+    
+    items = Item.objects.filter(owner=request.user).select_related(
+        "category"
+    ).prefetch_related("images").order_by("-created_at")
+    
+    return render(request, "seller/stock_management.html", {
+        "items": items,
+    })
+
+
+@login_required
+def seller_item_stock_update(request, pk: int):
+    """Add stock to an item"""
+    if not _seller_required(request):
+        raise Http404()
+    
+    item = get_object_or_404(Item, pk=pk, owner=request.user)
+    
+    if request.method == "POST":
+        form = StockUpdateForm(request.POST)
+        if form.is_valid():
+            quantity = form.cleaned_data["quantity"]
+            item.stock += quantity
+            item.save()
+            
+            messages.success(
+                request,
+                f"Stock updated! Added {quantity} units to {item.name}. Current stock: {item.stock}."
+            )
+            return redirect("seller_stock_management")
+    else:
+        form = StockUpdateForm()
+    
+    return render(request, "seller/item_stock_update.html", {
+        "item": item,
+        "form": form,
+    })
+
+
+# ==================== Seller Notifications Views ====================
+
+@login_required
+def seller_notifications(request):
+    """View seller's notifications"""
+    if not _seller_required(request):
+        raise Http404()
+    
+    # Get unread count
+    unread_count = SellerNotification.objects.filter(
+        seller=request.user,
+        is_read=False
+    ).count()
+    
+    # Get all notifications with ordering
+    notifications = SellerNotification.objects.filter(
+        seller=request.user
+    ).select_related(
+        'item', 'order', 'order_item__item', 'order_item__seller'
+    ).order_by('-created_at')
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(notifications, 20)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, "seller/notifications.html", {
+        "page_obj": page_obj,
+        "unread_count": unread_count,
+        "total_notifications": notifications.count(),
+    })
+
+
+@login_required
+def seller_notification_mark_read(request, notification_id: int):
+    """Mark a notification as read"""
+    if not _seller_required(request):
+        raise Http404()
+    
+    notification = get_object_or_404(
+        SellerNotification,
+        id=notification_id,
+        seller=request.user
+    )
+    
+    notification.mark_as_read()
+    
+    # Redirect to referring page or notifications page
+    next_url = request.GET.get('next', 'seller_notifications')
+    return redirect(next_url)
+
+
+@login_required
+def seller_notification_mark_all_read(request):
+    """Mark all notifications as read"""
+    if not _seller_required(request):
+        raise Http404()
+    
+    if request.method == "POST":
+        unread_notifications = SellerNotification.objects.filter(
+            seller=request.user,
+            is_read=False
+        )
+        
+        for notification in unread_notifications:
+            notification.mark_as_read()
+        
+        messages.success(request, f"Marked {unread_notifications.count()} notifications as read.")
+    
+    return redirect("seller_notifications")
+
+
+# ==================== Helper Functions ====================
+
+def _create_seller_notification(seller, notification_type, title, message, item=None, order=None, order_item=None):
+    """Create a notification for a seller"""
+    SellerNotification.objects.create(
+        seller=seller,
+        notification_type=notification_type,
+        title=title,
+        message=message,
+        item=item,
+        order=order,
+        order_item=order_item,
+    )

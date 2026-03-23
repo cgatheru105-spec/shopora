@@ -16,6 +16,13 @@ urlpatterns = [
     path("seller/items/new/", views.seller_item_create, name="seller_item_create"),
     path("seller/items/<int:pk>/edit/", views.seller_item_update, name="seller_item_update"),
     path("seller/items/<int:pk>/delete/", views.seller_item_delete, name="seller_item_delete"),
+    # Stock Management URLs
+    path("seller/stock/", views.seller_stock_management, name="seller_stock_management"),
+    path("seller/items/<int:pk>/stock/", views.seller_item_stock_update, name="seller_item_stock_update"),
+    # Seller Notifications URLs
+    path("seller/notifications/", views.seller_notifications, name="seller_notifications"),
+    path("seller/notifications/<int:notification_id>/read/", views.seller_notification_mark_read, name="seller_notification_mark_read"),
+    path("seller/notifications/mark-all-read/", views.seller_notification_mark_all_read, name="seller_notification_mark_all_read"),
     # Wishlist URLs
     path("wishlist/", views.wishlist_view, name="wishlist"),
     path("wishlist/toggle/<int:pk>/", views.toggle_wishlist, name="toggle_wishlist"),
