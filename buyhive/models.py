@@ -43,6 +43,22 @@ class Profile(models.Model):
         return SellerRating.objects.filter(seller=self.user).count()
 
 
+class ContactSubmission(models.Model):
+    name = models.CharField(max_length=120)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=40, blank=True)
+    subject = models.CharField(max_length=160)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.subject} ({self.email})"
+
+
 class MarketCategory(models.Model):
     THEME_CITRUS = "citrus"
     THEME_GARDEN = "garden"

@@ -8,7 +8,8 @@
 {% endblock %}
 
 {% block content %}
-  <section class="bh-hero mb-5" aria-labelledby="home-hero-title" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
+  <div class="bh-page-shell">
+  <section class="bh-hero" aria-labelledby="home-hero-title" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
     <div class="bh-hero-inner">
       <div class="bh-kicker justify-content-center">Fresh finds from local sellers</div>
       <h1 id="home-hero-title" class="display-5 mb-2">Fresh groceries, every day</h1>
@@ -34,7 +35,7 @@
     </div>
   </section>
 
-  <section class="bh-section-wrapper mb-4" id="marketplace-stats" aria-label="Marketplace statistics">
+  <section class="bh-section-wrapper" id="marketplace-stats" aria-label="Marketplace statistics">
     <div class="bh-section-shell">
       <div class="bh-page-intro bh-page-intro--compact">
         <div>
@@ -66,7 +67,7 @@
     </div>
   </section>
 
-  <section class="bh-section-wrapper mb-5" id="shop-categories" aria-label="Shop by category">
+  <section class="bh-section-wrapper" id="shop-categories" aria-label="Shop by category">
     <div class="bh-section-shell bh-section-shell--showcase">
       <div class="bh-page-intro">
         <div>
@@ -97,7 +98,7 @@
   </section>
 
   {% if market_radar %}
-    <section class="bh-section-wrapper mb-5" id="market-radar" aria-label="Market radar">
+    <section class="bh-section-wrapper" id="market-radar" aria-label="Market radar">
       <div class="bh-section-shell bh-section-shell--showcase">
         <div class="bh-page-intro">
           <div>
@@ -123,7 +124,7 @@
     </section>
   {% endif %}
 
-  <section class="bh-section-wrapper mb-5" id="popular-products" aria-label="Popular products">
+  <section class="bh-section-wrapper" id="popular-products" aria-label="Popular products">
     <div class="bh-section-shell bh-section-shell--showcase">
       <div class="bh-page-intro">
         <div>
@@ -186,7 +187,7 @@
   </section>
 
   {% if spotlight_sellers %}
-    <section class="bh-section-wrapper mb-5" id="seller-spotlights" aria-label="Seller spotlights">
+    <section class="bh-section-wrapper" id="seller-spotlights" aria-label="Seller spotlights">
       <div class="bh-section-shell bh-section-shell--showcase">
         <div class="bh-page-intro">
           <div>
@@ -228,10 +229,10 @@
     </section>
   {% endif %}
 
-  <section class="bh-section-wrapper mb-5" id="smart-picks" aria-label="Smart picks">
+  <section class="bh-section-wrapper" id="smart-picks" aria-label="Smart picks">
     <div class="row g-4">
       <div class="col-lg-6">
-        <div class="bh-surface p-4 h-100">
+        <div class="bh-surface bh-panel h-100">
           <div class="bh-page-intro">
             <div>
               <div class="bh-kicker">Fresh arrivals</div>
@@ -276,7 +277,7 @@
         </div>
       </div>
       <div class="col-lg-6">
-        <div class="bh-surface p-4 h-100">
+        <div class="bh-surface bh-panel h-100">
           <div class="bh-page-intro">
             <div>
               <div class="bh-kicker">Budget friendly</div>
@@ -323,7 +324,7 @@
     </div>
   </section>
 
-  <section class="bh-section-wrapper mb-5" id="founders" aria-labelledby="throne-room-title" aria-describedby="throne-room-description">
+  <section class="bh-section-wrapper" id="founders" aria-labelledby="throne-room-title" aria-describedby="throne-room-description">
     <div class="bh-page-intro">
       <div>
         <div class="bh-kicker">Founding royalty</div>
@@ -394,7 +395,7 @@
       <a class="btn btn-outline-primary btn-sm" href="{% url 'profiles_search' %}">Browse All Members</a>
     </div>
 
-    <div class="bh-surface p-4 text-center">
+    <div class="bh-surface bh-panel text-center">
       <div class="row g-4">
         <div class="col-md-4">
           <div class="mb-3">
@@ -429,4 +430,5 @@
       </div>
     </div>
   </section>
+  </div>
 {% endblock %}

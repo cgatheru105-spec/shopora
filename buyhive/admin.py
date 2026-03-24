@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Item, MarketCategory, Profile, SellerNotification
+from .models import ContactSubmission, Item, MarketCategory, Profile, SellerNotification
 
 
 @admin.register(MarketCategory)
@@ -17,6 +17,14 @@ class ProfileAdmin(admin.ModelAdmin):
     list_select_related = ("user",)
     search_fields = ("user__username", "user__email")
     list_filter = ("account_type",)
+
+
+@admin.register(ContactSubmission)
+class ContactSubmissionAdmin(admin.ModelAdmin):
+    list_display = ("name", "email", "subject", "is_read", "created_at")
+    search_fields = ("name", "email", "subject", "message")
+    list_filter = ("is_read", "created_at")
+    readonly_fields = ("created_at",)
 
 
 @admin.register(Item)

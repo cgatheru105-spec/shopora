@@ -27,6 +27,12 @@
   --bh-shadow-soft: 0 12px 32px rgba(17, 24, 39, 0.06);
   --bh-shadow-strong: 0 28px 65px rgba(17, 24, 39, 0.14);
   --bh-radius: 18px;
+  --bh-page-gap: clamp(24px, 3vw, 36px);
+  --bh-section-gap: clamp(18px, 2vw, 24px);
+  --bh-panel-padding: clamp(18px, 2.4vw, 28px);
+  --bh-panel-padding-lg: clamp(22px, 3vw, 36px);
+  --bh-content-narrow: 760px;
+  --bh-content-medium: 960px;
 }
 
 /* Motion, reduced-motion support and shared keyframes */
@@ -175,6 +181,103 @@ a:not(.btn):not(.navbar-brand):hover{
 .bh-container{
   padding-top: 32px;
   padding-bottom: 40px;
+}
+
+.bh-page-shell{
+  display: grid;
+  gap: var(--bh-page-gap);
+}
+
+.bh-page-shell--tight{
+  gap: var(--bh-section-gap);
+}
+
+.bh-section-stack{
+  display: grid;
+  gap: var(--bh-section-gap);
+}
+
+.bh-content-narrow{
+  max-width: min(100%, var(--bh-content-narrow));
+  margin-inline: auto;
+}
+
+.bh-content-medium{
+  max-width: min(100%, var(--bh-content-medium));
+  margin-inline: auto;
+}
+
+.bh-panel{
+  padding: var(--bh-panel-padding);
+}
+
+.bh-panel-lg{
+  padding: var(--bh-panel-padding-lg);
+}
+
+.bh-form-grid{
+  display: grid;
+  gap: 16px;
+}
+
+.bh-form-grid--two{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bh-form-field{
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bh-form-help{
+  font-size: 0.86rem;
+  color: var(--bh-muted);
+}
+
+.bh-form-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bh-form-actions > *{
+  flex-shrink: 0;
+}
+
+.bh-sticky-panel{
+  position: sticky;
+  top: 108px;
+}
+
+.bh-avatar-cover{
+  object-fit: cover;
+}
+
+.bh-avatar--sm{
+  width: 56px;
+  height: 56px;
+}
+
+.bh-avatar--md{
+  width: 72px;
+  height: 72px;
+}
+
+.bh-avatar--lg{
+  width: 84px;
+  height: 84px;
+}
+
+.bh-avatar--xl{
+  width: 96px;
+  height: 96px;
+}
+
+.bh-avatar-placeholder{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bh-footer{
@@ -1230,6 +1333,10 @@ html[data-bh-theme="dark"] .bh-body .bg-light{
   padding-bottom: 22px;
 }
 
+.bh-compact .bh-page-shell{
+  gap: 18px;
+}
+
 .bh-compact .bh-surface{
   border-radius: 12px;
 }
@@ -2078,6 +2185,14 @@ html[data-bh-theme="dark"] .bh-footer-note{
   .bh-container{
     padding-top: 28px;
     padding-bottom: 44px;
+  }
+
+  .bh-form-grid--two{
+    grid-template-columns: 1fr;
+  }
+
+  .bh-form-actions > *{
+    flex: 1 1 100%;
   }
 
   .bh-footer-grid{

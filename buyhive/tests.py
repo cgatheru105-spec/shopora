@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Item, MarketCategory, Order, OrderItem, Payment, Profile, Wishlist
+from .models import ContactSubmission, Item, MarketCategory, Order, OrderItem, Payment, Profile, Wishlist
 
 
 class MarketplaceViewTests(TestCase):
@@ -168,6 +168,82 @@ class MarketplaceViewTests(TestCase):
         self.assertTemplateUsed(response, "seller/dashboard.html")
         self.assertEqual(len(response.context["category_hubs"]), 1)
         self.assertEqual(response.context["seller_performance"]["orders_count"], 1)
+
+    def test_shared_layout_contains_contact_link(self):
+        response = self.client.get(reverse("index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("contact"), count=2)
+
+
+class ContactViewTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+
+    def _make_user(self, username, email):
+        user = self.user_model.objects.create_user(
+            username=username,
+            email=email,
+            password="password123",
+        )
+        Profile.objects.create(
+            user=user,
+            account_type=Profile.ACCOUNT_BUYER,
+            phone_number="0712345678",
+        )
+        return user
+
+    def test_contact_page_renders(self):
+        response = self.client.get(reverse("contact"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "contact.html")
+
+    def test_contact_page_prefills_authenticated_user_details(self):
+        user = self._make_user("contact_user", "contact@example.com")
+        self.client.login(username=user.username, password="password123")
+
+        response = self.client.get(reverse("contact"))
+        form = response.context["form"]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(form["name"].value(), user.username)
+        self.assertEqual(form["email"].value(), user.email)
+        self.assertEqual(form["phone_number"].value(), "0712345678")
+
+    def test_contact_post_creates_submission_and_shows_success_message(self):
+        response = self.client.post(
+            reverse("contact"),
+            {
+                "name": "Jamie Seller",
+                "email": "jamie@example.com",
+                "phone_number": "+254 712 345 678",
+                "subject": "Issue with an order",
+                "message": "I need help tracing a recent order.",
+            },
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse("contact"))
+        self.assertEqual(ContactSubmission.objects.count(), 1)
+        submission = ContactSubmission.objects.get()
+        self.assertEqual(submission.subject, "Issue with an order")
+        self.assertContains(response, "Thanks for reaching out.")
+
+    def test_contact_post_with_invalid_data_shows_errors(self):
+        response = self.client.post(
+            reverse("contact"),
+            {
+                "name": "",
+                "email": "not-an-email",
+                "subject": "",
+                "message": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ContactSubmission.objects.count(), 0)
+        self.assertContains(response, "This field is required.")
 
 
 class CheckoutFlowTests(TestCase):

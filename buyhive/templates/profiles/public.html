@@ -8,149 +8,151 @@
 {% endblock %}
 
 {% block content %}
-  <div class="bh-page-intro">
-    <div>
-      <div class="bh-kicker">Public profile</div>
-      <h1 class="bh-page-title h3 mb-0">{{ profile_user.username }}</h1>
-      <p>Quick snapshot of this account, recent activity, and the items they have listed lately.</p>
+  <div class="bh-page-shell">
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Public profile</div>
+        <h1 class="bh-page-title h3 mb-0">{{ profile_user.username }}</h1>
+        <p>Quick snapshot of this account, recent activity, and the items they have listed lately.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        {% if user.is_authenticated and user.pk == profile_user.pk %}
+          <a class="btn btn-success btn-sm" href="{% url 'profile_edit' %}">Edit your profile</a>
+        {% endif %}
+        <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Browse marketplace</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'profiles_search' %}">Back to search</a>
+      </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-      {% if user.is_authenticated and user.pk == profile_user.pk %}
-        <a class="btn btn-success btn-sm" href="{% url 'profile_edit' %}">Edit your profile</a>
-      {% endif %}
-      <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Browse marketplace</a>
-      <a class="btn btn-outline-secondary btn-sm" href="{% url 'profiles_search' %}">Back to search</a>
-    </div>
-  </div>
 
-  <section class="bh-profile-shell mb-4" aria-labelledby="profile-summary-title">
-    <div class="bh-surface bh-profile-banner p-4">
-      <div class="bh-entity mb-4">
-        {% if profile and profile.profile_picture %}
-          <img src="{{ profile.profile_picture.url }}" width="84" height="84" class="bh-entity-avatar" alt="Profile picture" style="object-fit: cover;">
-        {% else %}
-          <img src="{% static 'images/logo.png' %}" width="84" height="84" class="bh-entity-avatar" alt="Profile picture">
+    <section class="bh-profile-shell" aria-labelledby="profile-summary-title">
+      <div class="bh-surface bh-profile-banner bh-panel">
+        <div class="bh-entity mb-4">
+          {% if profile and profile.profile_picture %}
+            <img src="{{ profile.profile_picture.url }}" class="bh-entity-avatar bh-avatar-cover bh-avatar--lg" alt="Profile picture">
+          {% else %}
+            <img src="{% static 'images/logo.png' %}" class="bh-entity-avatar bh-avatar--lg" alt="Profile picture">
+          {% endif %}
+
+          <div>
+            <h2 id="profile-summary-title" class="fw-semibold fs-5 mb-0">{{ profile_user.username }}</h2>
+            <div class="bh-card-meta mt-2">
+              <span class="bh-mini-badge text-capitalize">{{ profile_type }}</span>
+              {% if profile_stats.total_items %}
+                <span class="bh-mini-badge">Active listings: {{ profile_stats.total_items }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if is_founder %}
+          <div class="bh-founder-card mb-4">
+            <div class="bh-founder-crown">
+              <i class="bi bi-stars"></i>
+            </div>
+
+            {% if profile and profile.profile_picture %}
+              <div class="bh-founder-avatar">
+                <img src="{{ profile.profile_picture.url }}" alt="{{ profile_user.username }}">
+              </div>
+            {% else %}
+              <div class="bh-founder-avatar bh-founder-avatar-empty">
+                <i class="bi bi-person fs-2"></i>
+              </div>
+            {% endif %}
+
+            <div class="bh-founder-copy">
+              <div class="bh-founder-name">{{ profile_user.username }}</div>
+              <div class="bh-founder-role">Founding royalty</div>
+              <div class="bh-founder-seat">One of the original names behind the marketplace. This profile carries founder status and gets the crown treatment.</div>
+            </div>
+          </div>
         {% endif %}
 
-        <div>
-          <h2 id="profile-summary-title" class="fw-semibold fs-5 mb-0">{{ profile_user.username }}</h2>
-          <div class="bh-card-meta mt-2">
-            <span class="bh-mini-badge text-capitalize">{{ profile_type }}</span>
-            {% if profile_stats.total_items %}
-              <span class="bh-mini-badge">Active listings: {{ profile_stats.total_items }}</span>
+        <div class="bh-chip-row">
+          <span class="bh-chip"><span class="bh-chip-dot"></span>{{ item_cards|length }} recent items shown</span>
+          <span class="bh-chip"><span class="bh-chip-dot"></span>Member since {{ member_since|date:"M Y" }}</span>
+          {% if profile_stats.latest_listing %}
+            <span class="bh-chip"><span class="bh-chip-dot"></span>Latest listing {{ profile_stats.latest_listing|date:"M j, Y" }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bh-stat-grid">
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Total listings</div>
+          <div class="bh-stat-value">{{ profile_stats.total_items|default:0 }}</div>
+        </div>
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Profile type</div>
+          <div class="bh-stat-value text-capitalize">{{ profile_type }}</div>
+        </div>
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Average price</div>
+          <div class="bh-stat-value">{% if profile_stats.avg_price %}Ksh{{ profile_stats.avg_price|floatformat:2 }}{% else %}-{% endif %}</div>
+        </div>
+        <div class="bh-stat-card">
+          <div class="bh-stat-label">Price range</div>
+          <div class="bh-stat-value bh-stat-value--compact">
+            {% if profile_stats.min_price and profile_stats.max_price %}
+              Ksh{{ profile_stats.min_price|floatformat:2 }} - Ksh{{ profile_stats.max_price|floatformat:2 }}
+            {% else %}
+              -
             {% endif %}
           </div>
-        </div>
-      </div>
-
-      {% if is_founder %}
-        <div class="bh-founder-card mb-4">
-          <div class="bh-founder-crown">
-            <i class="bi bi-stars"></i>
-          </div>
-          
-          {% if profile and profile.profile_picture %}
-            <div class="bh-founder-avatar">
-              <img src="{{ profile.profile_picture.url }}" alt="{{ profile_user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-          {% else %}
-            <div class="bh-founder-avatar bh-founder-avatar-empty">
-              <i class="bi bi-person" style="font-size: 2rem;"></i>
-            </div>
-          {% endif %}
-          
-          <div class="bh-founder-copy">
-            <div class="bh-founder-name">{{ profile_user.username }}</div>
-            <div class="bh-founder-role">Founding royalty</div>
-            <div class="bh-founder-seat">One of the original names behind the marketplace. This profile carries founder status and gets the crown treatment.</div>
-          </div>
-        </div>
-      {% endif %}
-
-      <div class="bh-chip-row">
-        <span class="bh-chip"><span class="bh-chip-dot"></span>{{ item_cards|length }} recent items shown</span>
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Member since {{ member_since|date:"M Y" }}</span>
-        {% if profile_stats.latest_listing %}
-          <span class="bh-chip"><span class="bh-chip-dot"></span>Latest listing {{ profile_stats.latest_listing|date:"M j, Y" }}</span>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="bh-stat-grid">
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Total listings</div>
-        <div class="bh-stat-value">{{ profile_stats.total_items|default:0 }}</div>
-      </div>
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Profile type</div>
-        <div class="bh-stat-value text-capitalize">{{ profile_type }}</div>
-      </div>
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Average price</div>
-        <div class="bh-stat-value">{% if profile_stats.avg_price %}Ksh{{ profile_stats.avg_price|floatformat:2 }}{% else %}-{% endif %}</div>
-      </div>
-      <div class="bh-stat-card">
-        <div class="bh-stat-label">Price range</div>
-        <div class="bh-stat-value bh-stat-value--compact">
-          {% if profile_stats.min_price and profile_stats.max_price %}
-            Ksh{{ profile_stats.min_price|floatformat:2 }} - Ksh{{ profile_stats.max_price|floatformat:2 }}
-          {% else %}
-            -
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </section>
-
-  {% if featured_item %}
-    <section class="bh-surface bh-featured-panel p-4 mb-4" aria-labelledby="featured-listing-title">
-      <div class="bh-page-intro mb-0">
-        <div>
-          <div class="bh-kicker">Featured listing</div>
-          <h2 id="featured-listing-title" class="bh-section-title h5 mb-0">{{ featured_item.name }}</h2>
-          <p>{{ featured_item.description|default:"A recent listing from this profile."|truncatechars:140 }}</p>
-        </div>
-        <div class="bh-chip-row mt-0">
-          <span class="bh-chip"><span class="bh-chip-dot"></span>Ksh{{ featured_item.price }}</span>
-          <span class="bh-chip"><span class="bh-chip-dot"></span>{{ featured_item.created_at|date:"M j, Y" }}</span>
         </div>
       </div>
     </section>
-  {% endif %}
 
-  <div class="bh-page-intro">
-    <div>
-      <div class="bh-kicker">Recent listings</div>
-      <h2 class="bh-section-title h5 mb-0">Recent items</h2>
-    </div>
-  </div>
-
-  {% if item_cards %}
-    <div class="row g-3">
-      {% for item in item_cards %}
-        <div class="col-12 col-md-6 col-lg-3">
-          <article class="card bh-product-card h-100">
-            {% if item.image_url %}
-              <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
-            {% else %}
-              <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
-            {% endif %}
-            <div class="card-body">
-              {% if item.category_name %}
-                <div class="bh-card-meta mb-2">
-                  <span class="bh-mini-badge">{{ item.category_name }}</span>
-                </div>
-              {% endif %}
-              <div class="fw-semibold">{{ item.name }}</div>
-              <div class="text-muted small">{{ item.description|truncatechars:90 }}</div>
-              <div class="bh-price mt-2">Ksh{{ item.price }}</div>
-              <div class="small text-muted mt-2">Listed {{ item.created_at|date:"M j, Y" }}</div>
-            </div>
-          </article>
+    {% if featured_item %}
+      <section class="bh-surface bh-featured-panel bh-panel" aria-labelledby="featured-listing-title">
+        <div class="bh-page-intro mb-0">
+          <div>
+            <div class="bh-kicker">Featured listing</div>
+            <h2 id="featured-listing-title" class="bh-section-title h5 mb-0">{{ featured_item.name }}</h2>
+            <p>{{ featured_item.description|default:"A recent listing from this profile."|truncatechars:140 }}</p>
+          </div>
+          <div class="bh-chip-row mt-0">
+            <span class="bh-chip"><span class="bh-chip-dot"></span>Ksh{{ featured_item.price }}</span>
+            <span class="bh-chip"><span class="bh-chip-dot"></span>{{ featured_item.created_at|date:"M j, Y" }}</span>
+          </div>
         </div>
-      {% endfor %}
+      </section>
+    {% endif %}
+
+    <div class="bh-page-intro">
+      <div>
+        <div class="bh-kicker">Recent listings</div>
+        <h2 class="bh-section-title h5 mb-0">Recent items</h2>
+      </div>
     </div>
-  {% else %}
-    <div class="alert alert-info bh-surface bh-empty-state">No items listed yet.</div>
-  {% endif %}
+
+    {% if item_cards %}
+      <div class="row g-3">
+        {% for item in item_cards %}
+          <div class="col-12 col-md-6 col-lg-3">
+            <article class="card bh-product-card h-100">
+              {% if item.image_url %}
+                <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
+              {% else %}
+                <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+              {% endif %}
+              <div class="card-body">
+                {% if item.category_name %}
+                  <div class="bh-card-meta mb-2">
+                    <span class="bh-mini-badge">{{ item.category_name }}</span>
+                  </div>
+                {% endif %}
+                <div class="fw-semibold">{{ item.name }}</div>
+                <div class="text-muted small">{{ item.description|truncatechars:90 }}</div>
+                <div class="bh-price mt-2">Ksh{{ item.price }}</div>
+                <div class="small text-muted mt-2">Listed {{ item.created_at|date:"M j, Y" }}</div>
+              </div>
+            </article>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info bh-surface bh-empty-state">No items listed yet.</div>
+    {% endif %}
+  </div>
 {% endblock %}

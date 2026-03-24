@@ -9,7 +9,7 @@
 
 {% block content %}
   <div class="bh-dashboard-stack">
-    <section class="bh-surface bh-dashboard-hero p-4 p-lg-5">
+    <section class="bh-surface bh-dashboard-hero bh-panel-lg">
       <div class="bh-page-intro mb-0">
         <div>
           <div class="bh-kicker">Buyer hub</div>
@@ -20,18 +20,13 @@
           {% if profile and profile.profile_picture %}
             <img
               src="{{ profile.profile_picture.url }}"
-              class="rounded-circle bh-entity-avatar"
-              width="72"
-              height="72"
+              class="rounded-circle bh-entity-avatar bh-avatar-cover bh-avatar--md"
               alt="Profile picture"
-              style="object-fit: cover;"
             >
           {% else %}
             <img
               src="{% static 'images/logo.png' %}"
-              class="rounded-circle bh-entity-avatar"
-              width="72"
-              height="72"
+              class="rounded-circle bh-entity-avatar bh-avatar--md"
               alt="Profile picture"
             >
           {% endif %}
@@ -82,7 +77,7 @@
 
     <section class="row g-4">
       <div class="col-lg-4">
-        <div class="bh-surface p-4 h-100">
+        <div class="bh-surface bh-panel h-100">
           <div class="bh-page-intro">
             <div>
               <div class="bh-kicker">Your activity</div>
@@ -117,7 +112,7 @@
       </div>
 
       <div class="col-lg-8">
-        <div class="bh-surface p-4 h-100">
+        <div class="bh-surface bh-panel h-100">
           <div class="bh-page-intro">
             <div>
               <div class="bh-kicker">Market radar</div>
@@ -211,7 +206,7 @@
 
     <section class="row g-4">
       <div class="col-lg-6">
-        <div class="bh-surface p-4 h-100">
+        <div class="bh-surface bh-panel h-100">
           <div class="bh-page-intro">
             <div>
               <div class="bh-kicker">Budget lane</div>
@@ -261,7 +256,7 @@
       </div>
 
       <div class="col-lg-6">
-        <div class="bh-surface p-4 h-100">
+        <div class="bh-surface bh-panel h-100">
           <div class="bh-page-intro">
             <div>
               <div class="bh-kicker">Seller spotlights</div>

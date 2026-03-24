@@ -8,125 +8,127 @@
 {% endblock %}
 
 {% block content %}
-  <section class="bh-hero mb-4" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
-    <div class="bh-hero-inner">
-      <div class="bh-kicker justify-content-center">Seasonal produce and pantry picks</div>
-      <h1 class="display-6 mb-2">Fresh organic groceries</h1>
-      <p class="lead mb-0">Healthy food delivered straight to your home</p>
+  <div class="bh-page-shell">
+    <section class="bh-hero" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
+      <div class="bh-hero-inner">
+        <div class="bh-kicker justify-content-center">Seasonal produce and pantry picks</div>
+        <h1 class="display-6 mb-2">Fresh organic groceries</h1>
+        <p class="lead mb-0">Healthy food delivered straight to your home</p>
 
-      <div class="bh-search bh-search-panel">
-        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg">
-          <input name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search products..." aria-label="Search products">
-          <button class="btn btn-success" type="submit">Search</button>
-        </form>
-      </div>
-
-      <div class="bh-hero-actions">
-        <a href="{% url 'items_public' %}" class="btn btn-light btn-lg px-4">Browse marketplace</a>
-        <a href="{% url 'profiles_search' %}" class="btn btn-outline-light btn-lg px-4">Find sellers</a>
-      </div>
-
-      <div class="bh-chip-row justify-content-center">
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Organic-first</span>
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Clean catalog</span>
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Easy browsing</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="bh-section-wrapper">
-    <div class="bh-section-shell bh-section-shell--showcase">
-      <div class="bh-page-intro">
-        <div>
-          <div class="bh-kicker">Catalog</div>
-          <h2 class="bh-section-title h4 mb-0">Shop products</h2>
-          <p>Browse the latest additions and quickly search for the items you already know you want.</p>
+        <div class="bh-search bh-search-panel">
+          <form action="{% url 'book' %}" method="get" class="input-group input-group-lg">
+            <input name="q" value="{{ q }}" type="text" class="form-control" placeholder="Search products..." aria-label="Search products">
+            <button class="btn btn-success" type="submit">Search</button>
+          </form>
         </div>
-        <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Browse marketplace</a>
-      </div>
 
-      <div class="bh-results-toolbar" aria-label="Catalog summary">
-        <div class="bh-results-meta">
-          <div class="bh-results-count">{{ items_count }} product{{ items_count|pluralize }}</div>
-          <div class="bh-results-context">
-            {% if q %}
-              Search results for "{{ q }}"
-            {% elif available_only %}
-              Showing products that are currently available
-            {% else %}
-              A focused catalog view for quick product discovery.
+        <div class="bh-hero-actions">
+          <a href="{% url 'items_public' %}" class="btn btn-light btn-lg px-4">Browse marketplace</a>
+          <a href="{% url 'profiles_search' %}" class="btn btn-outline-light btn-lg px-4">Find sellers</a>
+        </div>
+
+        <div class="bh-chip-row justify-content-center">
+          <span class="bh-chip"><span class="bh-chip-dot"></span>Organic-first</span>
+          <span class="bh-chip"><span class="bh-chip-dot"></span>Clean catalog</span>
+          <span class="bh-chip"><span class="bh-chip-dot"></span>Easy browsing</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="bh-section-wrapper">
+      <div class="bh-section-shell bh-section-shell--showcase">
+        <div class="bh-page-intro">
+          <div>
+            <div class="bh-kicker">Catalog</div>
+            <h2 class="bh-section-title h4 mb-0">Shop products</h2>
+            <p>Browse the latest additions and quickly search for the items you already know you want.</p>
+          </div>
+          <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Browse marketplace</a>
+        </div>
+
+        <div class="bh-results-toolbar" aria-label="Catalog summary">
+          <div class="bh-results-meta">
+            <div class="bh-results-count">{{ items_count }} product{{ items_count|pluralize }}</div>
+            <div class="bh-results-context">
+              {% if q %}
+                Search results for "{{ q }}"
+              {% elif available_only %}
+                Showing products that are currently available
+              {% else %}
+                A focused catalog view for quick product discovery.
+              {% endif %}
+            </div>
+          </div>
+          <div class="bh-results-actions">
+            {% if q or available_only %}
+              <a class="btn btn-outline-secondary btn-sm" href="{% url 'book' %}">Reset view</a>
             {% endif %}
+            <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}">Seller directory</a>
           </div>
         </div>
-        <div class="bh-results-actions">
-          {% if q or available_only %}
-            <a class="btn btn-outline-secondary btn-sm" href="{% url 'book' %}">Reset view</a>
-          {% endif %}
-          <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}">Seller directory</a>
-        </div>
-      </div>
 
-      {% if items %}
-        <div class="row g-4">
-          {% for item in items %}
-            <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
-              {% with first_image=item.images.first %}
-                <div class="card bh-product-card h-100">
-                  <div class="position-relative">
-                    <span class="badge text-bg-success position-absolute top-0 start-0 m-3">Organic</span>
+        {% if items %}
+          <div class="row g-4">
+            {% for item in items %}
+              <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                {% with first_image=item.images.first %}
+                  <div class="card bh-product-card h-100">
+                    <div class="position-relative">
+                      <span class="badge text-bg-success position-absolute top-0 start-0 m-3">Organic</span>
 
-                    {% if first_image %}
-                      <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
-                    {% else %}
-                      <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
-                    {% endif %}
-                  </div>
-
-                  <div class="card-body">
-                    <div class="fw-semibold bh-product-name">{{ item.name }}</div>
-                    <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
-                    <div class="bh-card-meta">
-                      {% if item.category %}
-                        <span class="bh-mini-badge">{{ item.category.name }}</span>
+                      {% if first_image %}
+                        <img src="{{ first_image.image.url }}" class="card-img-top" alt="{{ item.name }}">
+                      {% else %}
+                        <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
                       {% endif %}
-                      <span class="bh-mini-badge">Organic</span>
-                      <span class="small text-warning" aria-label="Rating: 5 out of 5">*****</span>
                     </div>
-                    <div class="bh-price mt-2">Ksh{{ item.price }}</div>
-                  </div>
 
-                  <div class="card-footer bg-transparent border-0 bh-card-footer bh-card-footer-stack">
-                    <div class="small text-muted">From {{ item.owner.username }}</div>
-                    <div class="bh-card-actions bh-card-actions-stack">
-                      <button
-                        type="button"
-                        class="btn btn-success"
-                        data-bh-add-to-cart
-                        data-bh-open-cart="true"
-                        data-bh-cart-id="item-{{ item.id }}"
-                        data-bh-cart-name="{{ item.name }}"
-                        data-bh-cart-price="{{ item.price }}"
-                        data-bh-cart-seller="{{ item.owner.username }}"
-                        data-bh-cart-url="{% url 'profile_public' item.owner.username %}"
-                        data-bh-cart-image="{% if first_image %}{{ first_image.image.url }}{% else %}{% static 'images/logo.png' %}{% endif %}"
-                      >Add to cart</button>
-                      <a class="btn btn-outline-success" href="{% url 'profile_public' item.owner.username %}">Seller profile</a>
+                    <div class="card-body">
+                      <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                      <div class="text-muted small mb-2">{{ item.description|default:"Fresh quality product from EcoMart" }}</div>
+                      <div class="bh-card-meta">
+                        {% if item.category %}
+                          <span class="bh-mini-badge">{{ item.category.name }}</span>
+                        {% endif %}
+                        <span class="bh-mini-badge">Organic</span>
+                        <span class="small text-warning" aria-label="Rating: 5 out of 5">*****</span>
+                      </div>
+                      <div class="bh-price mt-2">Ksh{{ item.price }}</div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 bh-card-footer bh-card-footer-stack">
+                      <div class="small text-muted">From {{ item.owner.username }}</div>
+                      <div class="bh-card-actions bh-card-actions-stack">
+                        <button
+                          type="button"
+                          class="btn btn-success"
+                          data-bh-add-to-cart
+                          data-bh-open-cart="true"
+                          data-bh-cart-id="item-{{ item.id }}"
+                          data-bh-cart-name="{{ item.name }}"
+                          data-bh-cart-price="{{ item.price }}"
+                          data-bh-cart-seller="{{ item.owner.username }}"
+                          data-bh-cart-url="{% url 'profile_public' item.owner.username %}"
+                          data-bh-cart-image="{% if first_image %}{{ first_image.image.url }}{% else %}{% static 'images/logo.png' %}{% endif %}"
+                        >Add to cart</button>
+                        <a class="btn btn-outline-success" href="{% url 'profile_public' item.owner.username %}">Seller profile</a>
+                      </div>
                     </div>
                   </div>
-                </div>
-              {% endwith %}
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="alert alert-info bh-surface">
-          {% if q %}
-            No products found for "{{ q }}".
-          {% else %}
-            No products available yet. If you are a seller, add items from your dashboard.
-          {% endif %}
-        </div>
-      {% endif %}
-    </div>
-  </section>
+                {% endwith %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info bh-surface">
+            {% if q %}
+              No products found for "{{ q }}".
+            {% else %}
+              No products available yet. If you are a seller, add items from your dashboard.
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
 {% endblock %}

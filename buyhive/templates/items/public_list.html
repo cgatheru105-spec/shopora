@@ -9,19 +9,20 @@
 {% endblock %}
 
 {% block content %}
-  <section class="bh-section-wrapper">
-    <div class="bh-section-shell">
-      <div class="bh-page-intro mb-4">
-        <div>
-          <div class="bh-kicker">Marketplace</div>
-          <h1 class="bh-section-title h3 mb-0">Browse All Items</h1>
-          <p class="text-muted">Compare sellers, refine the catalog, and move from discovery to checkout faster.</p>
+  <div class="bh-page-shell">
+    <section class="bh-section-wrapper">
+      <div class="bh-section-shell">
+        <div class="bh-page-intro">
+          <div>
+            <div class="bh-kicker">Marketplace</div>
+            <h1 class="bh-section-title h3 mb-0">Browse All Items</h1>
+            <p class="text-muted">Compare sellers, refine the catalog, and move from discovery to checkout faster.</p>
+          </div>
+          <div class="bh-results-actions">
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'book' %}">Quick shop</a>
+            <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}">Seller profiles</a>
+          </div>
         </div>
-        <div class="bh-results-actions">
-          <a class="btn btn-outline-secondary btn-sm" href="{% url 'book' %}">Quick shop</a>
-          <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}">Seller profiles</a>
-        </div>
-      </div>
 
       <div class="bh-quick-filter-row" aria-label="Marketplace quick filters">
         <a href="{% url 'items_public' %}" class="bh-quick-filter {% if not quick_filter and not available_only and not request.GET.search and not request.GET.min_price and not request.GET.max_price and not request.GET.sort_by %}is-active{% endif %}">
@@ -58,7 +59,7 @@
         </div>
       {% endif %}
 
-      <div class="row g-4 mb-5">
+      <div class="row g-4">
         <div class="col-lg-3">
           <form method="get" class="bh-surface bh-filter-shell" id="filterForm">
             <div class="bh-filter-head">
@@ -217,6 +218,6 @@
           {% endif %}
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 {% endblock %}

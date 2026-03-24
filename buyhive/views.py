@@ -16,8 +16,9 @@ from urllib.parse import urlencode
 
 from .constants import FOUNDER_USERNAMES, FOUNDER_USERNAMES_BY_KEY
 from .forms import (
-    AvailabilityFilterForm, CheckoutForm, ItemFilterForm, ItemForm, ItemReviewForm,
-    LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm, StockUpdateForm
+    AvailabilityFilterForm, CheckoutForm, ContactForm, ItemFilterForm, ItemForm,
+    ItemReviewForm, LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm,
+    StockUpdateForm
 )
 from .models import (
     Item, ItemImage, ItemReview, MarketCategory, Order, OrderItem, Payment,
@@ -464,6 +465,37 @@ def register_user(request):
 def logout_user(request):
     logout(request)
     return redirect("index")
+
+
+def _initial_contact_data(user):
+    if not user.is_authenticated:
+        return {}
+
+    profile = getattr(user, "profile", None)
+    full_name = user.get_full_name().strip()
+    initial = {
+        "name": full_name or user.username,
+        "email": user.email,
+    }
+    if profile and profile.phone_number:
+        initial["phone_number"] = profile.phone_number
+    return initial
+
+
+def contact(request):
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Thanks for reaching out. Your message has been saved and the team can review it now.",
+            )
+            return redirect("contact")
+    else:
+        form = ContactForm(initial=_initial_contact_data(request.user))
+
+    return render(request, "contact.html", {"form": form})
 
 
 def _get_or_create_profile(user):

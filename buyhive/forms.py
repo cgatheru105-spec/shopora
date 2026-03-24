@@ -1,10 +1,12 @@
+import re
+
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from .constants import FOUNDER_USERNAMES_BY_KEY
-from .models import Item, ItemReview, MarketCategory, Profile, SellerRating
+from .models import ContactSubmission, Item, ItemReview, MarketCategory, Profile, SellerRating
 
 
 class RegisterForm(forms.Form):
@@ -105,6 +107,64 @@ class LoginForm(forms.Form):
         self.fields["password"].widget.attrs.update(
             {"class": "form-control", "placeholder": "Password"}
         )
+
+
+class ContactForm(forms.ModelForm):
+    class Meta:
+        model = ContactSubmission
+        fields = ("name", "email", "phone_number", "subject", "message")
+        widgets = {
+            "name": forms.TextInput(),
+            "email": forms.EmailInput(),
+            "phone_number": forms.TextInput(),
+            "subject": forms.TextInput(),
+            "message": forms.Textarea(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["name"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Your name",
+                "autocomplete": "name",
+            }
+        )
+        self.fields["email"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "you@example.com",
+                "autocomplete": "email",
+            }
+        )
+        self.fields["phone_number"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Optional phone number",
+                "autocomplete": "tel",
+            }
+        )
+        self.fields["subject"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "What can we help with?",
+            }
+        )
+        self.fields["message"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Share the details so the team can follow up quickly.",
+                "rows": 6,
+            }
+        )
+
+    def clean_phone_number(self):
+        phone_number = (self.cleaned_data.get("phone_number") or "").strip()
+        if not phone_number:
+            return ""
+        if not re.fullmatch(r"[0-9+\-\s()]{7,40}", phone_number):
+            raise ValidationError("Please enter a valid phone number or leave it blank.")
+        return " ".join(phone_number.split())
 
 
 class ItemForm(forms.ModelForm):

@@ -3,77 +3,95 @@
 {% block title %}Register · EcoMart Shopora{% endblock %}
 
 {% block content %}
-  <div class="bh-auth">
-    <h1 class="bh-page-title h3 mb-3">Create account</h1>
+  <div class="bh-page-shell bh-content-narrow">
+    <div class="bh-auth">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Join the market</div>
+          <h1 class="bh-page-title h3 mb-0">Create account</h1>
+          <p>Set up your buyer or seller profile and start exploring the platform.</p>
+        </div>
+      </div>
 
-    <div class="bh-surface p-4">
-      <form method="post" action="">
+      <div class="bh-surface bh-panel-lg">
+        <form method="post" action="" class="bh-form-grid">
         {% csrf_token %}
 
         {% if form.non_field_errors %}
-          <div class="alert alert-danger py-2 mb-3">{{ form.non_field_errors|striptags }}</div>
+          <div class="alert alert-danger py-2 mb-0">{{ form.non_field_errors|striptags }}</div>
         {% endif %}
 
-        <div class="mb-2">
-          {{ form.username }}
-          {% if form.username.errors %}
-            <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
-          {% endif %}
-        </div>
+          <div class="bh-form-grid bh-form-grid--two">
+            <div class="bh-form-field">
+              <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+              {{ form.username }}
+              {% if form.username.errors %}
+                <div class="text-danger small">{{ form.username.errors|striptags }}</div>
+              {% endif %}
+            </div>
 
-        <div class="mb-2">
-          {{ form.email }}
-          {% if form.email.errors %}
-            <div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>
-          {% endif %}
-        </div>
+            <div class="bh-form-field">
+              <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+              {{ form.email }}
+              {% if form.email.errors %}
+                <div class="text-danger small">{{ form.email.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          </div>
 
-        <div class="mb-2">
-          {{ form.password1 }}
-          {% if form.password1.errors %}
-            <div class="text-danger small mt-1">{{ form.password1.errors|striptags }}</div>
-          {% endif %}
-        </div>
+          <div class="bh-form-grid bh-form-grid--two">
+            <div class="bh-form-field">
+              <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
+              {{ form.password1 }}
+              {% if form.password1.errors %}
+                <div class="text-danger small">{{ form.password1.errors|striptags }}</div>
+              {% endif %}
+            </div>
 
-        <div class="mb-2">
-          {{ form.password2 }}
-          {% if form.password2.errors %}
-            <div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>
-          {% endif %}
-        </div>
+            <div class="bh-form-field">
+              <label class="form-label" for="{{ form.password2.id_for_label }}">Confirm password</label>
+              {{ form.password2 }}
+              {% if form.password2.errors %}
+                <div class="text-danger small">{{ form.password2.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          </div>
 
-        <div class="mb-3">
-          <label class="form-label small text-muted">Account type</label>
-          {{ form.account_type }}
-          {% if form.account_type.errors %}
-            <div class="text-danger small mt-1">{{ form.account_type.errors|striptags }}</div>
-          {% endif %}
-        </div>
+          <div class="bh-form-field">
+            <label class="form-label" for="{{ form.account_type.id_for_label }}">Account type</label>
+            {{ form.account_type }}
+            {% if form.account_type.errors %}
+              <div class="text-danger small">{{ form.account_type.errors|striptags }}</div>
+            {% endif %}
+          </div>
 
-        <div class="mb-3">
-          <label class="form-label small text-muted">Phone Number (for MPESA payments)</label>
-          {{ form.phone_number }}
-          <small class="text-muted">Optional - Format: 0712345678 or 254712345678</small>
-          {% if form.phone_number.errors %}
-            <div class="text-danger small mt-1">{{ form.phone_number.errors|striptags }}</div>
-          {% endif %}
-        </div>
+          <div class="bh-form-grid bh-form-grid--two">
+            <div class="bh-form-field">
+              <label class="form-label" for="{{ form.phone_number.id_for_label }}">Phone Number (for MPESA payments)</label>
+              {{ form.phone_number }}
+              <div class="bh-form-help">Optional. Format: <code>0712345678</code> or <code>254712345678</code>.</div>
+              {% if form.phone_number.errors %}
+                <div class="text-danger small">{{ form.phone_number.errors|striptags }}</div>
+              {% endif %}
+            </div>
 
-        <div class="mb-3">
-          <label class="form-label small text-muted">Delivery Address</label>
-          {{ form.delivery_address }}
-          <small class="text-muted">Optional - Your default delivery address</small>
-          {% if form.delivery_address.errors %}
-            <div class="text-danger small mt-1">{{ form.delivery_address.errors|striptags }}</div>
-          {% endif %}
-        </div>
+            <div class="bh-form-field">
+              <label class="form-label" for="{{ form.delivery_address.id_for_label }}">Delivery Address</label>
+              {{ form.delivery_address }}
+              <div class="bh-form-help">Optional default address for future checkouts.</div>
+              {% if form.delivery_address.errors %}
+                <div class="text-danger small">{{ form.delivery_address.errors|striptags }}</div>
+              {% endif %}
+            </div>
+          </div>
 
-        <button type="submit" class="btn btn-success w-100">Register</button>
+          <button type="submit" class="btn btn-success w-100">Register</button>
 
-        <p class="text-center text-muted small mt-3 mb-0">
-          Already registered? <a href="{% url 'login' %}">Login</a>
-        </p>
-      </form>
+          <p class="text-center text-muted small mb-0">
+            Already registered? <a href="{% url 'login' %}">Login</a>
+          </p>
+        </form>
+      </div>
     </div>
   </div>
 {% endblock %}

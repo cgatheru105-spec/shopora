@@ -3,33 +3,43 @@
 {% block title %}Login · EcoMart Shopora{% endblock %}
 
 {% block content %}
-  <div class="bh-auth">
-    <h1 class="bh-page-title h3 mb-3">Login</h1>
+  <div class="bh-page-shell bh-content-narrow">
+    <div class="bh-auth">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Welcome back</div>
+          <h1 class="bh-page-title h3 mb-0">Login</h1>
+          <p>Pick up where you left off and jump back into the marketplace.</p>
+        </div>
+      </div>
 
-    <div class="bh-surface p-4">
-      <form method="post" action="">
+      <div class="bh-surface bh-panel-lg">
+        <form method="post" action="" class="bh-form-grid">
         {% csrf_token %}
 
-        <div class="mb-3">
-          {{ form.email }}
-          {% if form.email.errors %}
-            <div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>
-          {% endif %}
-        </div>
+          <div class="bh-form-field">
+            <label class="form-label" for="{{ form.email.id_for_label }}">Email or username</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <div class="text-danger small">{{ form.email.errors|striptags }}</div>
+            {% endif %}
+          </div>
 
-        <div class="mb-3">
-          {{ form.password }}
-          {% if form.password.errors %}
-            <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
-          {% endif %}
-        </div>
+          <div class="bh-form-field">
+            <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+              <div class="text-danger small">{{ form.password.errors|striptags }}</div>
+            {% endif %}
+          </div>
 
-        <button type="submit" class="btn btn-success w-100">Login</button>
+          <button type="submit" class="btn btn-success w-100">Login</button>
 
-        <p class="text-center text-muted small mt-3 mb-0">
-          No account? <a href="{% url 'register' %}">Create one</a>
-        </p>
-      </form>
+          <p class="text-center text-muted small mb-0">
+            No account? <a href="{% url 'register' %}">Create one</a>
+          </p>
+        </form>
+      </div>
     </div>
   </div>
 {% endblock %}

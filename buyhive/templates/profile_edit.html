@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-  <section class="mx-auto" style="max-width: 720px;" aria-labelledby="profile-edit-title">
+  <section class="bh-page-shell bh-content-narrow" aria-labelledby="profile-edit-title">
     <div class="bh-page-intro">
       <div>
         <div class="bh-kicker">Personalize your account</div>
@@ -9,17 +9,16 @@
       </div>
     </div>
 
-    <div class="bh-surface p-4 mb-4">
+    <div class="bh-surface bh-panel">
       <div class="bh-entity mb-4">
         {% if profile.profile_picture %}
           <img
             src="{{ profile.profile_picture.url }}"
             alt="Profile picture"
-            class="bh-entity-avatar"
-            style="width: 96px; height: 96px; object-fit: cover; border-radius: 999px;"
+            class="bh-entity-avatar bh-avatar-cover bh-avatar--xl"
           />
         {% else %}
-          <div class="bh-entity-avatar d-flex align-items-center justify-content-center" style="width: 96px; height: 96px; border-radius: 999px;">
+          <div class="bh-entity-avatar bh-avatar--xl bh-avatar-placeholder">
             {{ request.user.username|first|upper }}
           </div>
         {% endif %}
@@ -44,11 +43,11 @@
           
           {% if profile.profile_picture %}
             <div class="bh-founder-avatar">
-              <img src="{{ profile.profile_picture.url }}" alt="{{ request.user.username }}" style="width: 100%; height: 100%; object-fit: cover;">
+              <img src="{{ profile.profile_picture.url }}" alt="{{ request.user.username }}">
             </div>
           {% else %}
             <div class="bh-founder-avatar bh-founder-avatar-empty">
-              <i class="bi bi-person" style="font-size: 2rem;"></i>
+              <i class="bi bi-person fs-2"></i>
             </div>
           {% endif %}
           
@@ -63,15 +62,15 @@
 
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="mb-3">
+        <div class="bh-form-field">
           <label class="form-label" for="{{ form.profile_picture.id_for_label }}">Profile picture</label>
           {{ form.profile_picture }}
           {% if form.profile_picture.errors %}
-            <div class="text-danger small mt-1">{{ form.profile_picture.errors }}</div>
+            <div class="text-danger small">{{ form.profile_picture.errors }}</div>
           {% endif %}
         </div>
 
-        <div class="d-flex flex-wrap gap-2">
+        <div class="bh-form-actions">
           <button class="btn btn-success" type="submit">Save</button>
           <a class="btn btn-outline-success" href="{% url 'profile_public' request.user.username %}">View Public Profile</a>
           <a class="btn btn-outline-secondary" href="{% url 'dashboard' %}">Cancel</a>
@@ -79,7 +78,7 @@
       </form>
     </div>
 
-    <div class="bh-stat-grid mb-4">
+    <div class="bh-stat-grid">
       <div class="bh-stat-card">
         <div class="bh-stat-label">Your listings</div>
         <div class="bh-stat-value">{{ profile_stats.total_items|default:0 }}</div>
@@ -100,7 +99,7 @@
       </div>
     </div>
 
-    <div class="bh-surface p-4" data-bh-settings>
+    <div class="bh-surface bh-panel" data-bh-settings>
       <h2 class="h5 mb-3">Appearance &amp; settings</h2>
 
       <div class="row g-3">
