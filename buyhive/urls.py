@@ -20,6 +20,8 @@ urlpatterns = [
     # Stock Management URLs
     path("seller/stock/", views.seller_stock_management, name="seller_stock_management"),
     path("seller/items/<int:pk>/stock/", views.seller_item_stock_update, name="seller_item_stock_update"),
+    path("seller/orders/", views.seller_fulfillment_list, name="seller_fulfillment_list"),
+    path("seller/orders/<int:fulfillment_id>/", views.seller_fulfillment_detail, name="seller_fulfillment_detail"),
     # Seller Notifications URLs
     path("seller/notifications/", views.seller_notifications, name="seller_notifications"),
     path("seller/notifications/<int:notification_id>/read/", views.seller_notification_mark_read, name="seller_notification_mark_read"),

@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 
 from django import forms
 from django.contrib.auth.models import User
@@ -6,10 +7,62 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from .constants import FOUNDER_USERNAMES_BY_KEY
-from .models import ContactSubmission, Item, ItemReview, MarketCategory, Profile, SellerRating
+from .models import (
+    ContactSubmission,
+    Item,
+    ItemReview,
+    MarketCategory,
+    Profile,
+    SellerFulfillment,
+    SellerRating,
+)
 
 
-class RegisterForm(forms.Form):
+class LocationValidationMixin:
+    latitude_field_name = "latitude"
+    longitude_field_name = "longitude"
+    label_field_name = "location_label"
+    address_field_name = "location_address"
+
+    def _clean_location_fields(self):
+        label = (self.cleaned_data.get(self.label_field_name) or "").strip()
+        address = (self.cleaned_data.get(self.address_field_name) or "").strip()
+        raw_latitude = self.cleaned_data.get(self.latitude_field_name)
+        raw_longitude = self.cleaned_data.get(self.longitude_field_name)
+
+        latitude = None
+        longitude = None
+        if raw_latitude not in (None, ""):
+            try:
+                latitude = Decimal(str(raw_latitude))
+            except Exception as exc:
+                raise ValidationError("Please choose a valid map location.") from exc
+        if raw_longitude not in (None, ""):
+            try:
+                longitude = Decimal(str(raw_longitude))
+            except Exception as exc:
+                raise ValidationError("Please choose a valid map location.") from exc
+
+        has_any_location_value = any([label, address, latitude is not None, longitude is not None])
+        if not has_any_location_value:
+            self.cleaned_data[self.label_field_name] = ""
+            self.cleaned_data[self.address_field_name] = ""
+            self.cleaned_data[self.latitude_field_name] = None
+            self.cleaned_data[self.longitude_field_name] = None
+            return
+
+        if not label:
+            self.add_error(self.label_field_name, "Add a short label for this location.")
+        if latitude is None or longitude is None:
+            raise ValidationError("Pick the location on the map so we can save exact coordinates.")
+
+        self.cleaned_data[self.label_field_name] = label
+        self.cleaned_data[self.address_field_name] = address
+        self.cleaned_data[self.latitude_field_name] = latitude
+        self.cleaned_data[self.longitude_field_name] = longitude
+
+
+class RegisterForm(LocationValidationMixin, forms.Form):
     username = forms.CharField(max_length=150, required=True)
     email = forms.EmailField(required=True)
     password1 = forms.CharField(widget=forms.PasswordInput)
@@ -25,6 +78,10 @@ class RegisterForm(forms.Form):
     # Contact and address information
     phone_number = forms.CharField(max_length=15, required=False, help_text="Phone number for MPESA payments (optional)")
     delivery_address = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, help_text="Default delivery address (optional)")
+    location_label = forms.CharField(max_length=120, required=False)
+    location_address = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    latitude = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    longitude = forms.DecimalField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,6 +103,12 @@ class RegisterForm(forms.Form):
         )
         self.fields["delivery_address"].widget.attrs.update(
             {"class": "form-control", "placeholder": "Your delivery address"}
+        )
+        self.fields["location_label"].widget.attrs.update(
+            {"class": "form-control", "placeholder": "Home, farm gate, collection point"}
+        )
+        self.fields["location_address"].widget.attrs.update(
+            {"class": "form-control", "placeholder": "Nearest road, landmark, estate, or village"}
         )
 
     def clean_username(self):
@@ -82,6 +145,7 @@ class RegisterForm(forms.Form):
             self.add_error("password2", "Passwords do not match.")
         if password1:
             validate_password(password1)
+        self._clean_location_fields()
         return cleaned
 
     def save(self, commit=True):
@@ -170,7 +234,7 @@ class ContactForm(forms.ModelForm):
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ("name", "category", "description", "price")
+        fields = ("name", "category", "description", "condition_summary", "price")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -179,17 +243,38 @@ class ItemForm(forms.ModelForm):
         self.fields["category"].required = False
         self.fields["category"].widget.attrs.update({"class": "form-select"})
         self.fields["description"].widget.attrs.update({"class": "form-control", "rows": 4})
+        self.fields["condition_summary"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Harvested today, dry and sorted, chilled, ripe, etc.",
+            }
+        )
         self.fields["price"].widget.attrs.update({"class": "form-control"})
+        self.fields["condition_summary"].required = True
 
 
-class ProfilePictureForm(forms.ModelForm):
+class ProfileForm(LocationValidationMixin, forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ("profile_picture",)
+        fields = (
+            "profile_picture",
+            "phone_number",
+            "delivery_address",
+            "location_label",
+            "location_address",
+            "latitude",
+            "longitude",
+        )
         widgets = {
             "profile_picture": forms.ClearableFileInput(
                 attrs={"class": "form-control", "accept": "image/*"}
-            )
+            ),
+            "phone_number": forms.TextInput(attrs={"class": "form-control", "placeholder": "0712345678 or 254712345678"}),
+            "delivery_address": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Default delivery notes or address"}),
+            "location_label": forms.TextInput(attrs={"class": "form-control", "placeholder": "Home, farm gate, collection point"}),
+            "location_address": forms.Textarea(attrs={"class": "form-control", "rows": 2, "placeholder": "Nearest road, landmark, estate, or village"}),
+            "latitude": forms.HiddenInput(),
+            "longitude": forms.HiddenInput(),
         }
 
     def clean_profile_picture(self):
@@ -200,6 +285,24 @@ class ProfilePictureForm(forms.ModelForm):
         if not content_type.startswith("image/"):
             raise ValidationError("Please upload an image file.")
         return file
+
+    def clean_phone_number(self):
+        phone_number = (self.cleaned_data.get("phone_number") or "").strip()
+        if not phone_number:
+            return ""
+        digits = "".join(filter(str.isdigit, phone_number))
+        if len(digits) < 9 or len(digits) > 12:
+            raise ValidationError("Please enter a valid phone number.")
+        if not (digits.startswith("07") and len(digits) == 10) and not (
+            digits.startswith("2547") and len(digits) == 12
+        ):
+            raise ValidationError("Please enter a valid Kenyan phone number (e.g., 0712345678 or 254712345678).")
+        return digits
+
+    def clean(self):
+        cleaned = super().clean()
+        self._clean_location_fields()
+        return cleaned
 
 
 class ItemFilterForm(forms.Form):
@@ -300,7 +403,12 @@ class AvailabilityFilterForm(forms.Form):
     )
 
 
-class CheckoutForm(forms.Form):
+class CheckoutForm(LocationValidationMixin, forms.Form):
+    latitude_field_name = "delivery_latitude"
+    longitude_field_name = "delivery_longitude"
+    label_field_name = "delivery_location_label"
+    address_field_name = "delivery_address"
+
     buyer_name = forms.CharField(
         max_length=100,
         widget=forms.TextInput(attrs={
@@ -328,6 +436,15 @@ class CheckoutForm(forms.Form):
             "rows": 3
         })
     )
+    delivery_location_label = forms.CharField(
+        max_length=120,
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder": "Home, office, hostel, pickup gate",
+        }),
+    )
+    delivery_latitude = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    delivery_longitude = forms.DecimalField(required=False, widget=forms.HiddenInput())
 
     def clean_phone_number(self):
         phone = self.cleaned_data.get("phone_number", "").strip()
@@ -338,6 +455,11 @@ class CheckoutForm(forms.Form):
         if len(digits) < 10:
             raise ValidationError("Please enter a valid phone number.")
         return phone
+
+    def clean(self):
+        cleaned = super().clean()
+        self._clean_location_fields()
+        return cleaned
 
 
 class StockUpdateForm(forms.Form):
@@ -360,3 +482,27 @@ class StockUpdateForm(forms.Form):
             "placeholder": "Optional notes about this stock addition"
         })
     )
+
+
+class SellerFulfillmentUpdateForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=SellerFulfillment.STATUS_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    dispatch_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Optional dispatch notes for the buyer or your own records",
+            }
+        ),
+    )
+
+    def __init__(self, *args, current_status=SellerFulfillment.STATUS_PENDING, **kwargs):
+        super().__init__(*args, **kwargs)
+        allowed_statuses = SellerFulfillment.allowed_statuses_from(current_status)
+        self.fields["status"].choices = [
+            choice for choice in SellerFulfillment.STATUS_CHOICES if choice[0] in allowed_statuses
+        ]

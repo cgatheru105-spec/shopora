@@ -5,6 +5,20 @@
 
 {% block extra_head %}
   <link rel="stylesheet" href="{% static 'css/public.css' %}">
+  {% if public_location.is_visible %}
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    >
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="{% static 'js/location-picker.js' %}" defer></script>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -74,6 +88,9 @@
           {% if profile_stats.latest_listing %}
             <span class="bh-chip"><span class="bh-chip-dot"></span>Latest listing {{ profile_stats.latest_listing|date:"M j, Y" }}</span>
           {% endif %}
+          {% if public_location.is_visible %}
+            <span class="bh-chip"><span class="bh-chip-dot"></span>{{ public_location.label }}</span>
+          {% endif %}
         </div>
       </div>
 
@@ -101,6 +118,27 @@
           </div>
         </div>
       </div>
+
+      {% if public_location.is_visible %}
+        <div class="bh-surface bh-panel mt-4" data-location-view data-lat="{{ public_location.latitude }}" data-lng="{{ public_location.longitude }}">
+          <div class="bh-page-intro mb-3">
+            <div>
+              <div class="bh-kicker">Farmer location</div>
+              <h2 class="bh-section-title h5 mb-0">{{ public_location.label }}</h2>
+              {% if public_location.address %}
+                <p class="mb-0">{{ public_location.address }}</p>
+              {% endif %}
+            </div>
+            <a
+              class="btn btn-outline-success btn-sm"
+              href="https://www.openstreetmap.org/?mlat={{ public_location.latitude }}&mlon={{ public_location.longitude }}#map=15/{{ public_location.latitude }}/{{ public_location.longitude }}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Open map</a>
+          </div>
+          <div data-location-map style="height: 280px; border-radius: 14px; overflow: hidden;"></div>
+        </div>
+      {% endif %}
     </section>
 
     {% if featured_item %}
@@ -144,6 +182,9 @@
                 {% endif %}
                 <div class="fw-semibold">{{ item.name }}</div>
                 <div class="text-muted small">{{ item.description|truncatechars:90 }}</div>
+                {% if item.condition_summary %}
+                  <div class="small text-success mt-2">Condition: {{ item.condition_summary }}</div>
+                {% endif %}
                 <div class="bh-price mt-2">Ksh{{ item.price }}</div>
                 <div class="small text-muted mt-2">Listed {{ item.created_at|date:"M j, Y" }}</div>
               </div>

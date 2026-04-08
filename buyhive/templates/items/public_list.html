@@ -165,6 +165,12 @@
                       
                       <h5 class="card-title">{{ item.name }}</h5>
                       <p class="card-text text-muted small">{{ item.description|truncatechars:50 }}</p>
+                      {% if item.condition_summary %}
+                        <div class="small text-success mb-2">Condition: {{ item.condition_summary }}</div>
+                      {% endif %}
+                      {% if item.seller_location_label %}
+                        <div class="small text-muted mb-2">Farmer location: {{ item.seller_location_label }}</div>
+                      {% endif %}
                       
                       {% if item.average_rating > 0 %}
                         <div class="bh-product-rating">

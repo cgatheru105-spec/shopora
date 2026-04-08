@@ -5,7 +5,17 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import ContactSubmission, Item, MarketCategory, Order, OrderItem, Payment, Profile, Wishlist
+from .models import (
+    ContactSubmission,
+    Item,
+    MarketCategory,
+    Order,
+    OrderItem,
+    Payment,
+    Profile,
+    SellerFulfillment,
+    Wishlist,
+)
 
 
 class MarketplaceViewTests(TestCase):
@@ -333,16 +343,23 @@ class CheckoutFlowTests(TestCase):
                 "buyer_email": self.buyer.email,
                 "phone_number": "254712345678",
                 "delivery_address": "Westlands, Nairobi",
+                "delivery_location_label": "Westlands gate",
+                "delivery_latitude": "-1.267000",
+                "delivery_longitude": "36.810000",
             },
         )
 
         order = Order.objects.get(buyer=self.buyer)
         payment = Payment.objects.get(order=order)
+        fulfillment = SellerFulfillment.objects.get(order=order, seller=self.seller)
 
         self.assertRedirects(response, reverse("initiate_payment", args=[order.order_id]), fetch_redirect_response=False)
         self.assertEqual(order.total_amount, self.item.price * 3)
         self.assertEqual(order.items.first().quantity, 3)
         self.assertEqual(payment.amount, self.item.price * 3)
+        self.assertEqual(order.delivery_location_label, "Westlands gate")
+        self.assertIsNotNone(order.delivery_latitude)
+        self.assertEqual(fulfillment.status, SellerFulfillment.STATUS_PENDING)
         self.assertNotIn("checkout_cart", self.client.session)
         self.assertTrue(self.client.session["clear_browser_cart_on_next_page"])
 
@@ -464,3 +481,176 @@ class CheckoutFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["order_status"], "payment_initiated")
         self.assertEqual(response.json()["payment_status"], "initiated")
+
+
+class ProfileLocationAndVisibilityTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+
+    def _make_user(self, username, email, account_type, **profile_kwargs):
+        user = self.user_model.objects.create_user(
+            username=username,
+            email=email,
+            password="password123",
+        )
+        Profile.objects.create(user=user, account_type=account_type, **profile_kwargs)
+        return user
+
+    def test_register_saves_location_fields(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "mappedbuyer",
+                "email": "mappedbuyer@example.com",
+                "password1": "ComplexPass123!",
+                "password2": "ComplexPass123!",
+                "account_type": Profile.ACCOUNT_BUYER,
+                "phone_number": "0712345678",
+                "delivery_address": "Westlands apartment",
+                "location_label": "Westlands home",
+                "location_address": "Near Sarit Centre",
+                "latitude": "-1.267000",
+                "longitude": "36.810000",
+            },
+        )
+
+        self.assertRedirects(response, reverse("dashboard"))
+        profile = Profile.objects.get(user__username="mappedbuyer")
+        self.assertEqual(profile.location_label, "Westlands home")
+        self.assertIsNotNone(profile.latitude)
+
+    def test_register_rejects_partial_location(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "partialbuyer",
+                "email": "partialbuyer@example.com",
+                "password1": "ComplexPass123!",
+                "password2": "ComplexPass123!",
+                "account_type": Profile.ACCOUNT_BUYER,
+                "location_label": "Missing pin",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pick the location on the map")
+
+    def test_seller_public_profile_shows_location_but_buyer_search_hides_buyer_location(self):
+        seller = self._make_user(
+            "mappedseller",
+            "mappedseller@example.com",
+            Profile.ACCOUNT_SELLER,
+            location_label="Limuru farm",
+            location_address="Near Limuru market",
+            latitude="-1.114000",
+            longitude="36.642000",
+        )
+        self._make_user(
+            "mappedbuyer",
+            "mappedbuyer@example.com",
+            Profile.ACCOUNT_BUYER,
+            location_label="Private estate",
+            latitude="-1.267000",
+            longitude="36.810000",
+        )
+
+        response = self.client.get(reverse("profile_public", args=[seller.username]))
+        self.assertContains(response, "Limuru farm")
+
+        search_response = self.client.get(reverse("profiles_search"), {"account_type": "buyer"})
+        self.assertNotContains(search_response, "Private estate")
+
+
+class SellerFulfillmentTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+        self.buyer = self._make_user("dispatch_buyer", "dispatch_buyer@example.com", Profile.ACCOUNT_BUYER)
+        self.seller = self._make_user("dispatch_seller", "dispatch_seller@example.com", Profile.ACCOUNT_SELLER)
+        self.other_seller = self._make_user("other_seller", "other_seller@example.com", Profile.ACCOUNT_SELLER)
+        self.order = Order.objects.create(
+            order_id=f"ORD-{uuid.uuid4().hex[:10].upper()}",
+            buyer=self.buyer,
+            status="paid",
+            total_amount=500,
+            phone_number="254712345678",
+            buyer_name="Dispatch Buyer",
+            buyer_email=self.buyer.email,
+            delivery_address="Warehouse lane",
+            delivery_location_label="Warehouse gate",
+            delivery_latitude="-1.267000",
+            delivery_longitude="36.810000",
+        )
+        self.item = Item.objects.create(
+            owner=self.seller,
+            name="Dispatch Tomatoes",
+            description="Ready to ship",
+            condition_summary="Harvested this morning",
+            price=50,
+        )
+        OrderItem.objects.create(
+            order=self.order,
+            item=self.item,
+            seller=self.seller,
+            quantity=2,
+            price=self.item.price,
+            subtotal=self.item.price * 2,
+        )
+        self.fulfillment = SellerFulfillment.objects.create(order=self.order, seller=self.seller)
+
+    def _make_user(self, username, email, account_type):
+        user = self.user_model.objects.create_user(
+            username=username,
+            email=email,
+            password="password123",
+        )
+        Profile.objects.create(user=user, account_type=account_type)
+        return user
+
+    def test_seller_can_view_only_own_fulfillment(self):
+        self.client.login(username=self.seller.username, password="password123")
+        response = self.client.get(reverse("seller_fulfillment_detail", args=[self.fulfillment.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.order.delivery_location_label)
+
+        self.client.logout()
+        self.client.login(username=self.other_seller.username, password="password123")
+        denied = self.client.get(reverse("seller_fulfillment_detail", args=[self.fulfillment.id]))
+        self.assertEqual(denied.status_code, 404)
+
+    def test_fulfillment_status_update_advances_and_sets_timestamp(self):
+        self.client.login(username=self.seller.username, password="password123")
+        response = self.client.post(
+            reverse("seller_fulfillment_detail", args=[self.fulfillment.id]),
+            {
+                "status": SellerFulfillment.STATUS_PACKED,
+                "dispatch_notes": "Packed in crates",
+            },
+            follow=True,
+        )
+
+        self.fulfillment.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.fulfillment.status, SellerFulfillment.STATUS_PACKED)
+        self.assertEqual(self.fulfillment.dispatch_notes, "Packed in crates")
+        self.assertIsNotNone(self.fulfillment.packed_at)
+
+    def test_fulfillment_status_update_is_blocked_before_payment(self):
+        self.order.status = "payment_initiated"
+        self.order.save(update_fields=["status"])
+
+        self.client.login(username=self.seller.username, password="password123")
+        response = self.client.post(
+            reverse("seller_fulfillment_detail", args=[self.fulfillment.id]),
+            {
+                "status": SellerFulfillment.STATUS_PACKED,
+                "dispatch_notes": "Should not save yet",
+            },
+            follow=True,
+        )
+
+        self.fulfillment.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "dispatch status changes are locked")
+        self.assertEqual(self.fulfillment.status, SellerFulfillment.STATUS_PENDING)
+        self.assertEqual(self.fulfillment.dispatch_notes, "")

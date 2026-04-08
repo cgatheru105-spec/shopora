@@ -144,6 +144,9 @@
                   <div class="text-muted small mt-1">
                     Joined {{ row.user.date_joined|date:"M Y" }}
                   </div>
+                  {% if row.location_label %}
+                    <div class="text-muted small mt-1">Location: {{ row.location_label }}</div>
+                  {% endif %}
                 {% else %}
                   <div class="text-muted small">Profile not set up</div>
                 {% endif %}

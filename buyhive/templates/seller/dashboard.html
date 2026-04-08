@@ -47,6 +47,9 @@
         <a class="bh-chip text-decoration-none" href="{% url 'seller_stock_management' %}">
           <span class="bh-chip-dot" aria-hidden="true"></span>Manage stock
         </a>
+        <a class="bh-chip text-decoration-none" href="{% url 'seller_fulfillment_list' %}">
+          <span class="bh-chip-dot" aria-hidden="true"></span>Dispatch orders
+        </a>
         <a class="bh-chip text-decoration-none" href="{% url 'seller_notifications' %}">
           <span class="bh-chip-dot" aria-hidden="true"></span>View notifications
         </a>
@@ -201,6 +204,9 @@
                   </div>
                   <div class="fw-semibold bh-product-name">{{ item.name }}</div>
                   <div class="text-muted small">{{ item.description|truncatechars:88 }}</div>
+                  {% if item.condition_summary %}
+                    <div class="small text-success mt-2">Condition: {{ item.condition_summary }}</div>
+                  {% endif %}
                   <div class="bh-price mt-2">Ksh{{ item.price }}</div>
                 </div>
                 <div class="card-footer bg-transparent border-0 bh-card-footer">

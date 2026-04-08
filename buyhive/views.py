@@ -17,12 +17,13 @@ from urllib.parse import urlencode
 from .constants import FOUNDER_USERNAMES, FOUNDER_USERNAMES_BY_KEY
 from .forms import (
     AvailabilityFilterForm, CheckoutForm, ContactForm, ItemFilterForm, ItemForm,
-    ItemReviewForm, LoginForm, ProfilePictureForm, RegisterForm, SellerRatingForm,
-    StockUpdateForm
+    ItemReviewForm, LoginForm, ProfileForm, RegisterForm, SellerFulfillmentUpdateForm,
+    SellerRatingForm, StockUpdateForm
 )
 from .models import (
     Item, ItemImage, ItemReview, MarketCategory, Order, OrderItem, Payment,
-    PaymentLog, Profile, RecentlyViewed, SellerRating, SellerNotification, Wishlist
+    PaymentLog, Profile, RecentlyViewed, SellerFulfillment, SellerRating,
+    SellerNotification, Wishlist
 )
 from .mpesa_utils import MPESAConfigurationError, create_mpesa_client
 
@@ -60,6 +61,27 @@ def _first_item_image_url(item):
     return first_image.image.url if first_image else ""
 
 
+def _profile_location_payload(profile, public=False):
+    if not profile or not profile.has_saved_location:
+        return {
+            "label": "",
+            "address": "",
+            "latitude": None,
+            "longitude": None,
+            "is_visible": False,
+        }
+
+    is_seller = profile.account_type == Profile.ACCOUNT_SELLER
+    is_visible = public and is_seller
+    return {
+        "label": profile.location_label or "",
+        "address": profile.location_address or "",
+        "latitude": profile.latitude,
+        "longitude": profile.longitude,
+        "is_visible": is_visible,
+    }
+
+
 def _serialize_item_card(item, include_owner=False, user=None):
     card = {
         "id": item.id,
@@ -69,6 +91,7 @@ def _serialize_item_card(item, include_owner=False, user=None):
         "created_at": item.created_at,
         "image_url": _first_item_image_url(item),
         "is_available": item.is_available,
+        "condition_summary": item.condition_summary,
         "average_rating": item.average_rating,
         "total_reviews": item.total_reviews,
         "wishlist_count": item.wishlist_count,
@@ -82,6 +105,10 @@ def _serialize_item_card(item, include_owner=False, user=None):
         card["owner_username"] = item.owner.username
         card["owner_profile_url"] = reverse("profile_public", args=[item.owner.username])
         card["seller_rating"] = item.owner.profile.average_seller_rating if hasattr(item.owner, 'profile') else 0
+        owner_profile = getattr(item.owner, "profile", None)
+        owner_location = _profile_location_payload(owner_profile, public=True)
+        card["seller_location_label"] = owner_location["label"] if owner_location["is_visible"] else ""
+        card["seller_location_address"] = owner_location["address"] if owner_location["is_visible"] else ""
     return card
 
 
@@ -302,6 +329,7 @@ def _get_spotlight_sellers(limit=4, exclude_user_id=None):
                 "profile_picture_url": profile_picture_url,
                 "joined_at": user.date_joined,
                 "is_founder": user.username.lower() in FOUNDER_USERNAMES_BY_KEY,
+                "location_label": profile.location_label if profile and profile.account_type == Profile.ACCOUNT_SELLER and profile.has_saved_location else "",
             }
         )
     return spotlights
@@ -454,7 +482,11 @@ def register_user(request):
             user=user, 
             account_type=form.cleaned_data["account_type"],
             phone_number=form.cleaned_data.get("phone_number"),
-            delivery_address=form.cleaned_data.get("delivery_address")
+            delivery_address=form.cleaned_data.get("delivery_address"),
+            location_label=form.cleaned_data.get("location_label", ""),
+            location_address=form.cleaned_data.get("location_address", ""),
+            latitude=form.cleaned_data.get("latitude"),
+            longitude=form.cleaned_data.get("longitude"),
         )
         login(request, user)
         return redirect("dashboard")
@@ -584,7 +616,7 @@ def profile_edit(request):
         avg_price=models.Avg("price"),
         latest_listing=models.Max("created_at"),
     )
-    form = ProfilePictureForm(request.POST or None, request.FILES or None, instance=profile)
+    form = ProfileForm(request.POST or None, request.FILES or None, instance=profile)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "Profile updated.")
@@ -705,6 +737,11 @@ def profiles_search(request):
         results = []
         for user in users:
             profile = profile_by_user_id.get(user.id)
+            show_location = bool(
+                profile
+                and profile.account_type == Profile.ACCOUNT_SELLER
+                and profile.has_saved_location
+            )
             results.append({
                 "user": user,
                 "profile": profile,
@@ -712,6 +749,7 @@ def profiles_search(request):
                 "is_founder": user.username.lower() in FOUNDER_USERNAMES_BY_KEY,
                 "profile_type": profile.get_account_type_display() if profile else "",
                 "profile_url": reverse("profile_public", args=[user.username]),
+                "location_label": profile.location_label if show_location else "",
             })
     
     return render(request, "profiles/search.html", {
@@ -755,6 +793,7 @@ def profile_public(request, username: str):
             "is_founder": user_obj.username.lower() in FOUNDER_USERNAMES_BY_KEY,
             "profile_type": profile.get_account_type_display() if profile else "User",
             "member_since": profile.created_at if profile else user_obj.date_joined,
+            "public_location": _profile_location_payload(profile, public=True),
         },
     )
 
@@ -1073,7 +1112,13 @@ def _checkout_prefill_initial_data(user):
             initial_data["phone_number"] = profile.phone_number
         if profile.delivery_address:
             initial_data["delivery_address"] = profile.delivery_address
-    return {key: value for key, value in initial_data.items() if value}
+        if profile.location_label:
+            initial_data["delivery_location_label"] = profile.location_label
+        if profile.latitude is not None:
+            initial_data["delivery_latitude"] = profile.latitude
+        if profile.longitude is not None:
+            initial_data["delivery_longitude"] = profile.longitude
+    return {key: value for key, value in initial_data.items() if value not in ("", None)}
 
 
 def _payment_status_payload(order, payment):
@@ -1146,9 +1191,13 @@ def checkout(request):
                     buyer_name=form.cleaned_data["buyer_name"],
                     buyer_email=form.cleaned_data["buyer_email"],
                     delivery_address=form.cleaned_data["delivery_address"],
+                    delivery_location_label=form.cleaned_data["delivery_location_label"],
+                    delivery_latitude=form.cleaned_data["delivery_latitude"],
+                    delivery_longitude=form.cleaned_data["delivery_longitude"],
                     status="pending",
                 )
 
+                fulfillments_by_seller_id = {}
                 for cart_item in cart_items:
                     order_item = OrderItem.objects.create(
                         order=order,
@@ -1158,6 +1207,14 @@ def checkout(request):
                         price=cart_item["item"].price,
                         subtotal=cart_item["subtotal"],
                     )
+
+                    fulfillment = fulfillments_by_seller_id.get(cart_item["item"].owner_id)
+                    if fulfillment is None:
+                        fulfillment, _ = SellerFulfillment.objects.get_or_create(
+                            order=order,
+                            seller=cart_item["item"].owner,
+                        )
+                        fulfillments_by_seller_id[cart_item["item"].owner_id] = fulfillment
                     
                     # Decrease item stock
                     item = cart_item["item"]
@@ -1171,7 +1228,15 @@ def checkout(request):
                         seller=cart_item["item"].owner,
                         notification_type='product_sold',
                         title=f'Product Sold: {item.name}',
-                        message=f'Your product "{item.name}" has been ordered by {order.buyer_name}.\n\nOrder Details:\n• Quantity: {cart_item["quantity"]}\n• Phone: {order.phone_number}\n• Delivery Address: {order.delivery_address}\n• Order ID: {order.order_id}',
+                        message=(
+                            f'Your product "{item.name}" has been ordered by {order.buyer_name}.\n\n'
+                            f'Order Details:\n'
+                            f'• Quantity: {cart_item["quantity"]}\n'
+                            f'• Phone: {order.phone_number}\n'
+                            f'• Delivery Label: {order.delivery_location_label}\n'
+                            f'• Delivery Address: {order.delivery_address}\n'
+                            f'• Order ID: {order.order_id}'
+                        ),
                         item=item,
                         order=order,
                         order_item=order_item,
@@ -1448,10 +1513,12 @@ def order_detail(request, order_id):
     """View order details"""
     order = get_object_or_404(Order, order_id=order_id, buyer=request.user)
     order_items = order.items.select_related('item', 'seller')
+    seller_fulfillments = order.seller_fulfillments.select_related("seller").order_by("seller__username")
     
     return render(request, 'order_detail.html', {
         'order': order,
         'order_items': order_items,
+        'seller_fulfillments': seller_fulfillments,
     })
 
 
@@ -1533,6 +1600,76 @@ def seller_notifications(request):
         "unread_count": unread_count,
         "total_notifications": notifications.count(),
     })
+
+
+def _seller_fulfillment_queryset(user):
+    return SellerFulfillment.objects.filter(seller=user).select_related(
+        "order", "order__buyer", "seller"
+    ).prefetch_related("order__items__item")
+
+
+def _can_update_fulfillment_status(fulfillment):
+    return fulfillment.order.status in {"paid", "completed"}
+
+
+@login_required
+def seller_fulfillment_list(request):
+    if not _seller_required(request):
+        raise Http404()
+
+    fulfillments = list(_seller_fulfillment_queryset(request.user).order_by("-created_at"))
+    for fulfillment in fulfillments:
+        fulfillment.seller_item_count = fulfillment.order.items.filter(seller=request.user).count()
+        fulfillment.can_update_status = _can_update_fulfillment_status(fulfillment)
+    return render(
+        request,
+        "seller/fulfillment_list.html",
+        {"fulfillments": fulfillments},
+    )
+
+
+@login_required
+def seller_fulfillment_detail(request, fulfillment_id: int):
+    if not _seller_required(request):
+        raise Http404()
+
+    fulfillment = get_object_or_404(
+        _seller_fulfillment_queryset(request.user),
+        id=fulfillment_id,
+    )
+    order_items = fulfillment.order.items.filter(seller=request.user).select_related("item")
+    can_update_status = _can_update_fulfillment_status(fulfillment)
+
+    if request.method == "POST":
+        form = SellerFulfillmentUpdateForm(request.POST, current_status=fulfillment.status)
+        if not can_update_status:
+            messages.warning(request, "Dispatch statuses can only be updated after payment is confirmed.")
+        elif form.is_valid():
+            fulfillment.advance_to(
+                form.cleaned_data["status"],
+                notes=form.cleaned_data["dispatch_notes"],
+            )
+            messages.success(request, "Dispatch status updated.")
+            return redirect("seller_fulfillment_detail", fulfillment_id=fulfillment.id)
+    else:
+        form = SellerFulfillmentUpdateForm(
+            current_status=fulfillment.status,
+            initial={
+                "status": fulfillment.status,
+                "dispatch_notes": fulfillment.dispatch_notes,
+            }
+        )
+
+    return render(
+        request,
+        "seller/fulfillment_detail.html",
+        {
+            "fulfillment": fulfillment,
+            "order_items": order_items,
+            "form": form,
+            "can_update_status": can_update_status,
+        },
+    )
 
 
 @login_required

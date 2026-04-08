@@ -20,6 +20,14 @@
           {{ form.description }}
         </div>
         <div class="mb-3">
+          <label class="form-label">Condition / freshness</label>
+          {{ form.condition_summary }}
+          <div class="form-text">Tell buyers how fresh or ready this product is right now.</div>
+          {% if form.condition_summary.errors %}
+            <div class="text-danger small">{{ form.condition_summary.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
           <label class="form-label">Price</label>
           {{ form.price }}
         </div>

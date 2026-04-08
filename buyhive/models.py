@@ -25,6 +25,10 @@ class Profile(models.Model):
     # Contact and address information
     phone_number = models.CharField(max_length=15, blank=True, null=True, help_text="Phone number for MPESA payments")
     delivery_address = models.TextField(blank=True, null=True, help_text="Default delivery address")
+    location_label = models.CharField(max_length=120, blank=True, help_text="Short label for the saved location")
+    location_address = models.TextField(blank=True, help_text="Detailed location description or landmark notes")
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,6 +45,10 @@ class Profile(models.Model):
     @property
     def total_reviews(self):
         return SellerRating.objects.filter(seller=self.user).count()
+
+    @property
+    def has_saved_location(self):
+        return self.latitude is not None and self.longitude is not None
 
 
 class ContactSubmission(models.Model):
@@ -102,6 +110,7 @@ class Item(models.Model):
     )
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
+    condition_summary = models.CharField(max_length=140, blank=True, default="")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=10, help_text="Available quantity in stock")
     is_available = models.BooleanField(default=True)
@@ -252,6 +261,9 @@ class Order(models.Model):
     buyer_name = models.CharField(max_length=100)
     buyer_email = models.EmailField()
     delivery_address = models.TextField()
+    delivery_location_label = models.CharField(max_length=120, blank=True)
+    delivery_latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    delivery_longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -362,3 +374,70 @@ class SellerNotification(models.Model):
             self.is_read = True
             self.read_at = timezone.now()
             self.save()
+
+
+class SellerFulfillment(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_PACKED = "packed"
+    STATUS_READY = "ready"
+    STATUS_OUT_FOR_DELIVERY = "out_for_delivery"
+    STATUS_DELIVERED = "delivered"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_PACKED, "Packed"),
+        (STATUS_READY, "Ready"),
+        (STATUS_OUT_FOR_DELIVERY, "Out for Delivery"),
+        (STATUS_DELIVERED, "Delivered"),
+    )
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="seller_fulfillments")
+    seller = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="fulfillments"
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    dispatch_notes = models.TextField(blank=True)
+    packed_at = models.DateTimeField(null=True, blank=True)
+    ready_at = models.DateTimeField(null=True, blank=True)
+    out_for_delivery_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        unique_together = ("order", "seller")
+
+    def __str__(self):
+        return f"{self.order.order_id} · {self.seller.username}"
+
+    @classmethod
+    def allowed_statuses_from(cls, current_status):
+        status_flow = [
+            cls.STATUS_PENDING,
+            cls.STATUS_PACKED,
+            cls.STATUS_READY,
+            cls.STATUS_OUT_FOR_DELIVERY,
+            cls.STATUS_DELIVERED,
+        ]
+        try:
+            start_index = status_flow.index(current_status)
+        except ValueError:
+            start_index = 0
+        return status_flow[start_index:]
+
+    def advance_to(self, status, notes=""):
+        self.status = status
+        if notes:
+            self.dispatch_notes = notes
+
+        timestamp = timezone.now()
+        if status == self.STATUS_PACKED and not self.packed_at:
+            self.packed_at = timestamp
+        elif status == self.STATUS_READY and not self.ready_at:
+            self.ready_at = timestamp
+        elif status == self.STATUS_OUT_FOR_DELIVERY and not self.out_for_delivery_at:
+            self.out_for_delivery_at = timestamp
+        elif status == self.STATUS_DELIVERED and not self.delivered_at:
+            self.delivered_at = timestamp
+
+        self.save()

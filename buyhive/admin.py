@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ContactSubmission, Item, MarketCategory, Profile, SellerNotification
+from .models import ContactSubmission, Item, MarketCategory, Profile, SellerFulfillment, SellerNotification
 
 
 @admin.register(MarketCategory)
@@ -13,9 +13,9 @@ class MarketCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "account_type", "created_at")
+    list_display = ("user", "account_type", "location_label", "created_at")
     list_select_related = ("user",)
-    search_fields = ("user__username", "user__email")
+    search_fields = ("user__username", "user__email", "location_label", "location_address")
     list_filter = ("account_type",)
 
 
@@ -29,9 +29,9 @@ class ContactSubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "price", "stock", "owner", "is_available", "created_at")
+    list_display = ("name", "category", "condition_summary", "price", "stock", "owner", "is_available", "created_at")
     list_select_related = ("owner", "category")
-    search_fields = ("name", "category__name", "owner__username", "owner__email")
+    search_fields = ("name", "condition_summary", "category__name", "owner__username", "owner__email")
     list_filter = ("category", "is_available", "created_at")
 
 
@@ -47,3 +47,11 @@ class SellerNotificationAdmin(admin.ModelAdmin):
         if obj:  # Editing an existing notification
             return self.readonly_fields + ("seller", "notification_type", "title", "message", "item", "order", "order_item")
         return self.readonly_fields
+
+
+@admin.register(SellerFulfillment)
+class SellerFulfillmentAdmin(admin.ModelAdmin):
+    list_display = ("order", "seller", "status", "created_at", "updated_at")
+    list_select_related = ("order", "seller")
+    search_fields = ("order__order_id", "seller__username", "dispatch_notes")
+    list_filter = ("status", "created_at", "updated_at")

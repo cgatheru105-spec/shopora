@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg bh-navbar" aria-label="Seller workspace">
+  <div class="container">
+    <div class="bh-navbar-shell">
+      <a class="navbar-brand bh-navbar-brand d-flex align-items-center gap-3" href="{% url 'dashboard' %}">
+        <span class="bh-brand-mark" aria-hidden="true"></span>
+        <span class="bh-brand-copy">
+          <span class="bh-brand-title">EcoMart Shopora</span>
+          <span class="bh-brand-subtitle">Seller workspace</span>
+        </span>
+      </a>
+
+      <button class="navbar-toggler bh-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sellerTopnav" aria-controls="sellerTopnav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="collapse navbar-collapse bh-navbar-collapse" id="sellerTopnav">
+        <ul class="navbar-nav bh-navbar-links">
+          <li class="nav-item"><a class="nav-link" href="{% url 'seller_items' %}">Inventory</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'seller_stock_management' %}">Stock</a></li>
+          <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'seller_fulfillment_list' %}">Orders</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'seller_notifications' %}">Notifications</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'profile_edit' %}">Profile</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+  <div class="bh-page-intro">
+    <div>
+      <div class="bh-kicker">Seller workspace</div>
+      <h1 class="bh-page-title h3 mb-0">Dispatch orders</h1>
+      <p>Track where every order is headed and move shipments from packed to delivered.</p>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} shadow-sm" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if fulfillments %}
+    <div class="bh-surface p-3 p-md-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Order</th>
+              <th>Buyer</th>
+              <th>Destination</th>
+              <th>Order status</th>
+              <th>Status</th>
+              <th>Items</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fulfillment in fulfillments %}
+              <tr>
+                <td><code>{{ fulfillment.order.order_id }}</code></td>
+                <td>
+                  <div>{{ fulfillment.order.buyer_name }}</div>
+                  <div class="small text-muted">{{ fulfillment.order.phone_number }}</div>
+                </td>
+                <td>
+                  <div>{{ fulfillment.order.delivery_location_label|default:"Destination saved" }}</div>
+                  <div class="small text-muted">{{ fulfillment.order.delivery_address|truncatechars:60 }}</div>
+                </td>
+                <td>{{ fulfillment.order.get_status_display }}</td>
+                <td>{{ fulfillment.get_status_display }}</td>
+                <td>{{ fulfillment.seller_item_count }}</td>
+                <td class="text-end">
+                  <a class="btn btn-outline-success btn-sm" href="{% url 'seller_fulfillment_detail' fulfillment.id %}">
+                    {% if fulfillment.can_update_status %}Open{% else %}Review{% endif %}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info shadow-sm bh-empty-state">
+      No seller orders yet. New paid or pending shipments will appear here after buyers check out.
+    </div>
+  {% endif %}
+{% endblock %}

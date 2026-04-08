@@ -66,6 +66,12 @@
                     <small class="text-muted">Delivery Address</small>
                     <div>{{ order.delivery_address|linebreaks }}</div>
                   </div>
+                  {% if order.delivery_location_label %}
+                    <div class="col-md-6">
+                      <small class="text-muted">Pinned Location</small>
+                      <div>{{ order.delivery_location_label }}</div>
+                    </div>
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -90,6 +96,9 @@
                           <strong>{{ item.item.name }}</strong>
                           <br>
                           <small class="text-muted">{{ item.item.description|truncatechars:60 }}</small>
+                          {% if item.item.condition_summary %}
+                            <div class="small text-success mt-1">Condition: {{ item.item.condition_summary }}</div>
+                          {% endif %}
                         </td>
                         <td>
                           <a href="{% url 'profile_public' item.seller.username %}">{{ item.seller.username }}</a>
@@ -109,6 +118,32 @@
                 </table>
               </div>
             </div>
+
+            {% if seller_fulfillments %}
+              <div class="bh-surface bh-panel mt-4">
+                <h5 class="mb-3">Seller dispatch progress</h5>
+                <div class="table-responsive">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr class="table-light">
+                        <th>Seller</th>
+                        <th>Status</th>
+                        <th>Last notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for fulfillment in seller_fulfillments %}
+                        <tr>
+                          <td><a href="{% url 'profile_public' fulfillment.seller.username %}">{{ fulfillment.seller.username }}</a></td>
+                          <td>{{ fulfillment.get_status_display }}</td>
+                          <td>{{ fulfillment.dispatch_notes|default:"-" }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            {% endif %}
           </div>
 
           <div class="col-lg-4">

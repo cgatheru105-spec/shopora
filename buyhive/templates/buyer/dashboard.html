@@ -169,6 +169,12 @@
               <div class="card-body">
                 <div class="fw-semibold bh-product-name">{{ item.name }}</div>
                 <div class="text-muted small">{{ item.description|truncatechars:90 }}</div>
+                {% if item.condition_summary %}
+                  <div class="small text-success mt-2">Condition: {{ item.condition_summary }}</div>
+                {% endif %}
+                {% if item.seller_location_label %}
+                  <div class="small text-muted mt-1">From {{ item.seller_location_label }}</div>
+                {% endif %}
                 <div class="bh-card-meta mt-3">
                   {% if item.category_name %}
                     <span class="bh-mini-badge">{{ item.category_name }}</span>
@@ -228,6 +234,9 @@
                 <div class="bh-inline-item-copy">
                   <div class="fw-semibold">{{ item.name }}</div>
                   <div class="small text-muted">by {{ item.owner_username }}</div>
+                  {% if item.condition_summary %}
+                    <div class="small text-success">{{ item.condition_summary }}</div>
+                  {% endif %}
                   {% if item.category_name %}
                     <div class="bh-card-meta mt-2 mb-2"><span class="bh-mini-badge">{{ item.category_name }}</span></div>
                   {% endif %}
@@ -279,6 +288,9 @@
                   <div>
                     <div class="bh-spotlight-name">{{ seller.username }}</div>
                     <div class="bh-spotlight-meta">{{ seller.profile_type }} · {{ seller.item_count }} listing{{ seller.item_count|pluralize }}</div>
+                    {% if seller.location_label %}
+                      <div class="small text-muted mt-1">{{ seller.location_label }}</div>
+                    {% endif %}
                   </div>
                 </div>
                 <p class="bh-spotlight-copy">Joined {{ seller.joined_at|date:"M Y" }} and already building a strong storefront.</p>
