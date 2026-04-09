@@ -48,13 +48,9 @@ class MarketplaceViewTests(TestCase):
         response = self.client.get(reverse("index"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("marketplace_snapshot", response.context)
         self.assertGreaterEqual(len(response.context["popular_cards"]), 1)
-        self.assertGreaterEqual(len(response.context["fresh_cards"]), 1)
-        self.assertGreaterEqual(len(response.context["budget_cards"]), 1)
-        self.assertGreaterEqual(len(response.context["spotlight_sellers"]), 1)
         self.assertGreaterEqual(len(response.context["category_hubs"]), 1)
-        self.assertGreaterEqual(len(response.context["market_radar"]), 1)
+        self.assertEqual(len(response.context["founders"]), 5)
 
     def test_buyer_dashboard_receives_marketplace_sections(self):
         buyer = self._make_user("buyerone", "buyer@example.com", Profile.ACCOUNT_BUYER)

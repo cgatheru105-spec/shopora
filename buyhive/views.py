@@ -354,7 +354,7 @@ def _get_founders():
         profile_picture_url = None
         if profile and profile.profile_picture:
             profile_picture_url = profile.profile_picture.url
-        
+
         founders.append(
             {
                 "seat_name": username,
@@ -392,30 +392,12 @@ def index(request):
         _serialize_item_card(item, include_owner=True, user=request.user) for item in popular_items
     ]
 
-    fresh_cards = [
-        _serialize_item_card(item, include_owner=True, user=request.user)
-        for item in Item.objects.select_related("owner", "category")
-        .prefetch_related("images")
-        .order_by("-created_at")[:4]
-    ]
-    budget_cards = [
-        _serialize_item_card(item, include_owner=True, user=request.user)
-        for item in Item.objects.select_related("owner", "category")
-        .prefetch_related("images")
-        .order_by("price", "-created_at")[:4]
-    ]
-
     return render(
         request,
         "index.html",
         {
             "popular_cards": popular_cards,
-            "fresh_cards": fresh_cards,
-            "budget_cards": budget_cards,
-            "spotlight_sellers": _get_spotlight_sellers(),
-            "marketplace_snapshot": _get_marketplace_snapshot(),
             "category_hubs": _get_category_hubs(),
-            "market_radar": _get_market_radar(),
             "founders": _get_founders(),
         },
     )

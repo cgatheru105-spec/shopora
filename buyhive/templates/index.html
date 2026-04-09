@@ -9,441 +9,182 @@
 
 {% block content %}
   <div class="bh-page-shell">
-  <section class="bh-hero" aria-labelledby="home-hero-title" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
-    <div class="bh-hero-inner">
-      <div class="bh-kicker justify-content-center">Fresh finds from local sellers</div>
-      <h1 id="home-hero-title" class="display-5 mb-2">Fresh groceries, every day</h1>
-      <p class="lead mb-0">Healthy / Sustainable / Affordable</p>
+    <section class="bh-hero" aria-labelledby="home-hero-title" style="--bh-hero-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e');">
+      <div class="bh-hero-inner">
+        <div class="bh-kicker justify-content-center">Local grocery marketplace</div>
+        <h1 id="home-hero-title" class="display-5 mb-2">Find what you need without the clutter</h1>
+        <p class="lead mb-0">Search products, compare sellers, and save items for checkout.</p>
 
-      <div class="bh-search bh-search-panel">
-        <form action="{% url 'book' %}" method="get" class="input-group input-group-lg" role="search" aria-label="Search groceries">
-          <input name="q" type="text" class="form-control" placeholder="Search groceries..." aria-label="Search groceries">
-          <button type="submit" class="btn btn-success">Search</button>
-        </form>
-      </div>
-
-      <div class="bh-hero-actions">
-        <a href="{% url 'book' %}" class="btn btn-light btn-lg px-4">Shop products</a>
-        <a href="{% url 'profiles_search' %}" class="btn btn-outline-light btn-lg px-4">Browse sellers</a>
-      </div>
-
-      <div class="bh-chip-row justify-content-center">
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Same-day friendly</span>
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Trusted community sellers</span>
-        <span class="bh-chip"><span class="bh-chip-dot"></span>Simple browsing</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="bh-section-wrapper" id="marketplace-stats" aria-label="Marketplace statistics">
-    <div class="bh-section-shell">
-      <div class="bh-page-intro bh-page-intro--compact">
-        <div>
-          <div class="bh-kicker">Market pulse</div>
-          <h2 class="bh-section-title h5 mb-0">A quick read on the marketplace</h2>
-        </div>
-        <div class="bh-section-caption">Live activity snapshot</div>
-      </div>
-      <div class="bh-stat-grid">
-        <div class="bh-stat-card">
-          <div class="bh-stat-label">Live sellers</div>
-          <div class="bh-stat-value">{{ marketplace_snapshot.active_sellers|default:0 }}</div>
-        </div>
-        <div class="bh-stat-card">
-          <div class="bh-stat-label">Listings live</div>
-          <div class="bh-stat-value">{{ marketplace_snapshot.total_listings|default:0 }}</div>
-        </div>
-        <div class="bh-stat-card">
-          <div class="bh-stat-label">Average price</div>
-          <div class="bh-stat-value">
-            {% if marketplace_snapshot.average_price %}Ksh{{ marketplace_snapshot.average_price|floatformat:2 }}{% else %}-{% endif %}
-          </div>
-        </div>
-        <div class="bh-stat-card">
-          <div class="bh-stat-label">Active categories</div>
-          <div class="bh-stat-value">{{ marketplace_snapshot.active_categories|default:0 }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="bh-section-wrapper" id="shop-categories" aria-label="Shop by category">
-    <div class="bh-section-shell bh-section-shell--showcase">
-      <div class="bh-page-intro">
-        <div>
-          <div class="bh-kicker">Start here</div>
-          <h2 class="bh-section-title h4 mb-0">Shop by live aisle</h2>
-        </div>
-        <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">View all</a>
-      </div>
-
-      {% if category_hubs %}
-        <div class="bh-category-grid">
-          {% for category in category_hubs %}
-            <a href="{{ category.browse_url }}" class="bh-category-card bh-category-card--{{ category.theme }} text-decoration-none">
-              <div class="bh-category-icon"><i class="bi {{ category.icon }}" aria-hidden="true"></i></div>
-              <div class="fw-semibold">{{ category.name }}</div>
-              <div class="bh-category-note">{{ category.description }}</div>
-              <div class="bh-category-meta">
-                {{ category.listing_count }} live · {{ category.seller_count }} seller{{ category.seller_count|pluralize }}
-                {% if category.average_price %}· Avg Ksh{{ category.average_price|floatformat:0 }}{% endif %}
-              </div>
-            </a>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="alert alert-info bh-surface mb-0">Categories will light up here as sellers structure more listings.</div>
-      {% endif %}
-    </div>
-  </section>
-
-  {% if market_radar %}
-    <section class="bh-section-wrapper" id="market-radar" aria-label="Market radar">
-      <div class="bh-section-shell bh-section-shell--showcase">
-        <div class="bh-page-intro">
-          <div>
-            <div class="bh-kicker">Originality layer</div>
-            <h2 class="bh-section-title h4 mb-0">Market radar</h2>
-            <p>Live marketplace signals generated from listings, wishlists, reviews, and orders in the database.</p>
-          </div>
-          <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">Explore the data</a>
+        <div class="bh-search bh-search-panel">
+          <form action="{% url 'book' %}" method="get" class="input-group input-group-lg" role="search" aria-label="Search groceries">
+            <input name="q" type="text" class="form-control" placeholder="Search groceries..." aria-label="Search groceries">
+            <button type="submit" class="btn btn-success">Search</button>
+          </form>
         </div>
 
-        <div class="bh-radar-grid">
-          {% for signal in market_radar %}
-            <article class="bh-radar-card bh-radar-card--{{ signal.theme }}">
-              <div class="bh-kicker mb-2">{{ signal.eyebrow }}</div>
-              <h3 class="h5 mb-2">{{ signal.title }}</h3>
-              <div class="bh-radar-value">{{ signal.value }}</div>
-              <p class="mb-3">{{ signal.summary }}</p>
-              <a class="btn btn-outline-success btn-sm" href="{{ signal.href }}">{{ signal.cta }}</a>
-            </article>
-          {% endfor %}
+        <div class="bh-hero-actions">
+          <a href="{% url 'book' %}" class="btn btn-light btn-lg px-4">Browse products</a>
+          <a href="{% url 'profiles_search' %}" class="btn btn-outline-light btn-lg px-4">Browse sellers</a>
         </div>
       </div>
     </section>
-  {% endif %}
 
-  <section class="bh-section-wrapper" id="popular-products" aria-label="Popular products">
-    <div class="bh-section-shell bh-section-shell--showcase">
-      <div class="bh-page-intro">
-        <div>
-          <div class="bh-kicker">Community favorites</div>
-          <h2 class="bh-section-title h4 mb-0">Popular products</h2>
-          <p>Fresh additions from active sellers in the marketplace.</p>
-        </div>
-        <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">View all</a>
-      </div>
-
-      {% if popular_cards %}
-        <div class="row g-3">
-          {% for item in popular_cards %}
-            <div class="col-12 col-sm-6 col-lg-3">
-              <article class="card bh-product-card h-100">
-                {% if item.image_url %}
-                  <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
-                {% else %}
-                  <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
-                {% endif %}
-
-                <div class="card-body">
-                  <div class="fw-semibold bh-product-name">{{ item.name }}</div>
-                  <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
-                  {% if item.condition_summary %}
-                    <div class="small text-success mt-2">Condition: {{ item.condition_summary }}</div>
-                  {% endif %}
-                  {% if item.seller_location_label %}
-                    <div class="small text-muted mt-1">From {{ item.seller_location_label }}</div>
-                  {% endif %}
-                  <div class="bh-card-meta mt-3">
-                    {% if item.category_name %}
-                      <span class="bh-mini-badge">{{ item.category_name }}</span>
-                    {% endif %}
-                    <span class="bh-mini-badge">Popular</span>
-                    <span class="bh-mini-badge">Fresh pick</span>
-                  </div>
-                  <div class="bh-price mt-2">Ksh{{ item.price }}</div>
-                </div>
-
-                <div class="card-footer bg-transparent border-0 bh-card-footer">
-                  <small class="text-muted">by {{ item.owner_username }}</small>
-                  <div class="bh-card-actions">
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary btn-sm"
-                      data-bh-add-to-cart
-                      data-bh-cart-id="item-{{ item.id }}"
-                      data-bh-cart-name="{{ item.name }}"
-                      data-bh-cart-price="{{ item.price }}"
-                      data-bh-cart-seller="{{ item.owner_username }}"
-                      data-bh-cart-url="{{ item.owner_profile_url }}"
-                      data-bh-cart-image="{{ item.image_url }}"
-                    >Add to Cart</button>
-                    <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
-                  </div>
-                </div>
-              </article>
-            </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="alert alert-info bh-surface">No popular products available yet. Check back soon!</div>
-      {% endif %}
-    </div>
-  </section>
-
-  {% if spotlight_sellers %}
-    <section class="bh-section-wrapper" id="seller-spotlights" aria-label="Seller spotlights">
+    <section class="bh-section-wrapper" id="shop-categories" aria-label="Shop by category">
       <div class="bh-section-shell bh-section-shell--showcase">
         <div class="bh-page-intro">
           <div>
-            <div class="bh-kicker">Seller spotlights</div>
-            <h2 class="bh-section-title h4 mb-0">Browse the active storefronts</h2>
-            <p>Profiles with a deeper catalog so shoppers can compare more than one item at a time.</p>
+            <div class="bh-kicker">Start here</div>
+            <h2 class="bh-section-title h4 mb-0">Shop by category</h2>
+            <p class="mb-0">Jump straight into the aisles that already have active listings.</p>
           </div>
-          <a class="btn btn-outline-success btn-sm" href="{% url 'profiles_search' %}?account_type=seller&sort_by=items_count">See sellers</a>
+          <a class="btn btn-outline-success btn-sm" href="{% url 'book' %}">View all</a>
         </div>
 
-        <div class="bh-spotlight-grid">
-          {% for seller in spotlight_sellers %}
-            <article class="bh-spotlight-card">
-              <div class="bh-spotlight-head">
-                <div class="bh-spotlight-avatar">
-                  {% if seller.profile_picture_url %}
-                    <img src="{{ seller.profile_picture_url }}" alt="{{ seller.username }}">
-                  {% else %}
-                    <img src="{% static 'images/logo.png' %}" alt="{{ seller.username }}">
-                  {% endif %}
+        {% if category_hubs %}
+          <div class="bh-category-grid">
+            {% for category in category_hubs %}
+              <a href="{{ category.browse_url }}" class="bh-category-card bh-category-card--{{ category.theme }} text-decoration-none">
+                <div class="bh-category-icon"><i class="bi {{ category.icon }}" aria-hidden="true"></i></div>
+                <div class="fw-semibold">{{ category.name }}</div>
+                <div class="bh-category-note">{{ category.description }}</div>
+                <div class="bh-category-meta">
+                  {{ category.listing_count }} live · {{ category.seller_count }} seller{{ category.seller_count|pluralize }}
+                  {% if category.average_price %}· Avg Ksh{{ category.average_price|floatformat:0 }}{% endif %}
                 </div>
-                <div>
-                  <div class="bh-spotlight-name">{{ seller.username }}</div>
-                  <div class="bh-spotlight-meta">{{ seller.profile_type }} · {{ seller.item_count }} listing{{ seller.item_count|pluralize }}</div>
-                  {% if seller.location_label %}
-                    <div class="small text-muted mt-1">{{ seller.location_label }}</div>
-                  {% endif %}
-                </div>
-              </div>
-              <p class="bh-spotlight-copy">
-                {% if seller.is_founder %}
-                  Founder storefront with an established catalog and community presence.
-                {% else %}
-                  Active seller profile with multiple live listings ready to browse.
-                {% endif %}
-              </p>
-              <a class="btn btn-outline-success btn-sm" href="{{ seller.profile_url }}">View seller</a>
-            </article>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-  {% endif %}
-
-  <section class="bh-section-wrapper" id="smart-picks" aria-label="Smart picks">
-    <div class="row g-4">
-      <div class="col-lg-6">
-        <div class="bh-surface bh-panel h-100">
-          <div class="bh-page-intro">
-            <div>
-              <div class="bh-kicker">Fresh arrivals</div>
-              <h2 class="bh-section-title h5 mb-0">New to the marketplace</h2>
-              <p>Recently listed products you can save to cart right away.</p>
-            </div>
-          </div>
-          <div class="bh-inline-item-list">
-            {% for item in fresh_cards %}
-              <article class="bh-inline-item">
-                <div class="bh-inline-item-thumb">
-                  {% if item.image_url %}
-                    <img src="{{ item.image_url }}" alt="{{ item.name }}">
-                  {% else %}
-                    <img src="{% static 'images/logo.png' %}" alt="{{ item.name }}">
-                  {% endif %}
-                </div>
-                <div class="bh-inline-item-copy">
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">by {{ item.owner_username }}</div>
-                  {% if item.condition_summary %}
-                    <div class="small text-success">{{ item.condition_summary }}</div>
-                  {% endif %}
-                  <p>{{ item.description|truncatechars:78 }}</p>
-                </div>
-                <div class="bh-inline-item-actions">
-                  <div class="bh-price">Ksh{{ item.price }}</div>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm"
-                    data-bh-add-to-cart
-                    data-bh-cart-id="item-{{ item.id }}"
-                    data-bh-cart-name="{{ item.name }}"
-                    data-bh-cart-price="{{ item.price }}"
-                    data-bh-cart-seller="{{ item.owner_username }}"
-                    data-bh-cart-url="{{ item.owner_profile_url }}"
-                    data-bh-cart-image="{{ item.image_url }}"
-                  >Save</button>
-                </div>
-              </article>
-            {% empty %}
-              <div class="text-muted small">Fresh arrivals will appear here once sellers post new items.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6">
-        <div class="bh-surface bh-panel h-100">
-          <div class="bh-page-intro">
-            <div>
-              <div class="bh-kicker">Budget friendly</div>
-              <h2 class="bh-section-title h5 mb-0">Lower-priced picks</h2>
-              <p>Start with value buys if you want to keep your basket practical.</p>
-            </div>
-          </div>
-          <div class="bh-inline-item-list">
-            {% for item in budget_cards %}
-              <article class="bh-inline-item">
-                <div class="bh-inline-item-thumb">
-                  {% if item.image_url %}
-                    <img src="{{ item.image_url }}" alt="{{ item.name }}">
-                  {% else %}
-                    <img src="{% static 'images/logo.png' %}" alt="{{ item.name }}">
-                  {% endif %}
-                </div>
-                <div class="bh-inline-item-copy">
-                  <div class="fw-semibold">{{ item.name }}</div>
-                  <div class="small text-muted">by {{ item.owner_username }}</div>
-                  {% if item.condition_summary %}
-                    <div class="small text-success">{{ item.condition_summary }}</div>
-                  {% endif %}
-                  <p>{{ item.description|truncatechars:78 }}</p>
-                </div>
-                <div class="bh-inline-item-actions">
-                  <div class="bh-price">Ksh{{ item.price }}</div>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary btn-sm"
-                    data-bh-add-to-cart
-                    data-bh-cart-id="item-{{ item.id }}"
-                    data-bh-cart-name="{{ item.name }}"
-                    data-bh-cart-price="{{ item.price }}"
-                    data-bh-cart-seller="{{ item.owner_username }}"
-                    data-bh-cart-url="{{ item.owner_profile_url }}"
-                    data-bh-cart-image="{{ item.image_url }}"
-                  >Save</button>
-                </div>
-              </article>
-            {% empty %}
-              <div class="text-muted small">Budget picks will appear as items are added to the marketplace.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="bh-section-wrapper" id="founders" aria-labelledby="throne-room-title" aria-describedby="throne-room-description">
-    <div class="bh-page-intro">
-      <div>
-        <div class="bh-kicker">Founding royalty</div>
-        <h2 id="throne-room-title" class="bh-section-title h4 mb-0">The throne room</h2>
-        <p id="throne-room-description" class="mb-0">These five seats are reserved for the founding names. Once their accounts exist, they show up here like marketplace kings.</p>
-      </div>
-      <a class="btn btn-outline-warning btn-sm" href="{% url 'profiles_search' %}?sort_by=items_count" aria-label="Browse all community members">Meet the community</a>
-    </div>
-
-    <div class="bh-founder-grid" role="grid" aria-label="Founding members showcase">
-      {% for founder in founders %}
-        <article class="bh-founder-card {% if not founder.is_live %}is-empty{% endif %}" role="gridcell" aria-labelledby="founder-{{ forloop.counter }}-name" {% if founder.is_live %}aria-describedby="founder-{{ forloop.counter }}-status"{% endif %}>
-          <header class="bh-founder-crown" aria-hidden="true">
-            <i class="bi bi-stars" aria-hidden="true"></i>
-          </header>
-
-          {% if founder.profile_picture_url %}
-            <div class="bh-founder-avatar" role="img" aria-label="Profile picture of {{ founder.display_name }}">
-              <img src="{{ founder.profile_picture_url }}" alt="Profile picture of {{ founder.display_name }}" loading="lazy">
-            </div>
-          {% elif founder.is_live %}
-            <div class="bh-founder-avatar bh-founder-avatar-empty" role="img" aria-label="Default avatar for {{ founder.display_name }}">
-              <i class="bi bi-person" aria-hidden="true"></i>
-            </div>
-          {% else %}
-            <div class="bh-founder-avatar bh-founder-avatar-reserved" role="img" aria-label="Reserved seat for {{ founder.display_name }}">
-              <i class="bi bi-lock" aria-hidden="true"></i>
-            </div>
-          {% endif %}
-
-          <div class="bh-founder-copy">
-            <h3 id="founder-{{ forloop.counter }}-name" class="bh-founder-name">{{ founder.display_name }}</h3>
-            <div class="bh-founder-role" {% if founder.is_live %}id="founder-{{ forloop.counter }}-status"{% endif %}>{{ founder.status_label }}</div>
-            <p class="bh-founder-seat">{{ founder.description }}</p>
-          </div>
-
-          <footer class="bh-chip-row" role="group" aria-label="Founder actions and status">
-            {% if founder.is_live %}
-              <span class="bh-chip" aria-label="Active founding member">
-                <span class="bh-chip-dot" aria-hidden="true"></span>Crowned
-              </span>
-              <a class="bh-chip text-decoration-none" href="{{ founder.profile_url }}" aria-label="View {{ founder.display_name }}'s profile">
-                <span class="bh-chip-dot" aria-hidden="true"></span>View profile
               </a>
-              {% if user.is_authenticated and user.id == founder.user_id %}
-                <a class="bh-chip bh-chip-edit text-decoration-none" href="{% url 'profile_edit' %}" aria-label="Edit your founder profile">
-                  <span class="bh-chip-dot" aria-hidden="true"></span>Edit seat
-                </a>
-              {% endif %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info bh-surface mb-0">Categories will appear here as sellers organize more listings.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="bh-section-wrapper" id="popular-products" aria-label="Popular products">
+      <div class="bh-section-shell bh-section-shell--showcase">
+        <div class="bh-page-intro">
+          <div>
+            <div class="bh-kicker">On the shelf now</div>
+            <h2 class="bh-section-title h4 mb-0">Products worth browsing</h2>
+            <p class="mb-0">Recent listings from active sellers.</p>
+          </div>
+          <a class="btn btn-outline-success btn-sm" href="{% url 'items_public' %}">View all</a>
+        </div>
+
+        {% if popular_cards %}
+          <div class="row g-3">
+            {% for item in popular_cards %}
+              <div class="col-12 col-sm-6 col-lg-3">
+                <article class="card bh-product-card h-100">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" class="card-img-top" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'images/logo.png' %}" class="card-img-top" alt="{{ item.name }}">
+                  {% endif %}
+
+                  <div class="card-body">
+                    <div class="fw-semibold bh-product-name">{{ item.name }}</div>
+                    <div class="text-muted small">{{ item.description|truncatechars:50 }}</div>
+                    {% if item.condition_summary %}
+                      <div class="small text-success mt-2">Condition: {{ item.condition_summary }}</div>
+                    {% endif %}
+                    {% if item.seller_location_label %}
+                      <div class="small text-muted mt-1">From {{ item.seller_location_label }}</div>
+                    {% endif %}
+                    {% if item.category_name %}
+                      <div class="bh-card-meta mt-3">
+                        <span class="bh-mini-badge">{{ item.category_name }}</span>
+                      </div>
+                    {% endif %}
+                    <div class="bh-price mt-2">Ksh{{ item.price }}</div>
+                  </div>
+
+                  <div class="card-footer bg-transparent border-0 bh-card-footer">
+                    <small class="text-muted">by {{ item.owner_username }}</small>
+                    <div class="bh-card-actions">
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        data-bh-add-to-cart
+                        data-bh-cart-id="item-{{ item.id }}"
+                        data-bh-cart-name="{{ item.name }}"
+                        data-bh-cart-price="{{ item.price }}"
+                        data-bh-cart-seller="{{ item.owner_username }}"
+                        data-bh-cart-url="{{ item.owner_profile_url }}"
+                        data-bh-cart-image="{{ item.image_url }}"
+                      >Add to cart</button>
+                      <a href="{{ item.owner_profile_url }}" class="btn btn-outline-success btn-sm" aria-label="View profile for {{ item.owner_username }}">Seller</a>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info bh-surface mb-0">No products are live yet. Check back soon.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="bh-section-wrapper" id="founders" aria-labelledby="throne-room-title" aria-describedby="throne-room-description">
+      <div class="bh-page-intro">
+        <div>
+          <div class="bh-kicker">Founding royalty</div>
+          <h2 id="throne-room-title" class="bh-section-title h4 mb-0">The throne room</h2>
+          <p id="throne-room-description" class="mb-0">These five seats are reserved for the founding names. Once their accounts exist, they show up here like marketplace kings.</p>
+        </div>
+        <a class="btn btn-outline-warning btn-sm" href="{% url 'profiles_search' %}?sort_by=items_count" aria-label="Browse all community members">Meet the community</a>
+      </div>
+
+      <div class="bh-founder-grid" role="grid" aria-label="Founding members showcase">
+        {% for founder in founders %}
+          <article class="bh-founder-card {% if not founder.is_live %}is-empty{% endif %}" role="gridcell" aria-labelledby="founder-{{ forloop.counter }}-name" {% if founder.is_live %}aria-describedby="founder-{{ forloop.counter }}-status"{% endif %}>
+            <header class="bh-founder-crown" aria-hidden="true">
+              <i class="bi bi-stars" aria-hidden="true"></i>
+            </header>
+
+            {% if founder.profile_picture_url %}
+              <div class="bh-founder-avatar" role="img" aria-label="Profile picture of {{ founder.display_name }}">
+                <img src="{{ founder.profile_picture_url }}" alt="Profile picture of {{ founder.display_name }}" loading="lazy">
+              </div>
+            {% elif founder.is_live %}
+              <div class="bh-founder-avatar bh-founder-avatar-empty" role="img" aria-label="Default avatar for {{ founder.display_name }}">
+                <i class="bi bi-person" aria-hidden="true"></i>
+              </div>
             {% else %}
-              <span class="bh-chip" aria-label="Reserved seat for future founding member">
-                <span class="bh-chip-dot" aria-hidden="true"></span>Reserved name
-              </span>
+              <div class="bh-founder-avatar bh-founder-avatar-reserved" role="img" aria-label="Reserved seat for {{ founder.display_name }}">
+                <i class="bi bi-lock" aria-hidden="true"></i>
+              </div>
             {% endif %}
-          </footer>
-        </article>
-      {% endfor %}
-    </div>
-  </section>
 
-  <section class="bh-section-wrapper" id="community-section" aria-label="Community discovery">
-    <div class="bh-page-intro">
-      <div>
-        <div class="bh-kicker">Community hub</div>
-        <h2 class="bh-section-title h4 mb-0">Join Our Community</h2>
-        <p>Connect with sellers, discover new members, and explore the marketplace.</p>
-      </div>
-      <a class="btn btn-outline-primary btn-sm" href="{% url 'profiles_search' %}">Browse All Members</a>
-    </div>
+            <div class="bh-founder-copy">
+              <h3 id="founder-{{ forloop.counter }}-name" class="bh-founder-name">{{ founder.display_name }}</h3>
+              <div class="bh-founder-role" {% if founder.is_live %}id="founder-{{ forloop.counter }}-status"{% endif %}>{{ founder.status_label }}</div>
+              <p class="bh-founder-seat">{{ founder.description }}</p>
+            </div>
 
-    <div class="bh-surface bh-panel text-center">
-      <div class="row g-4">
-        <div class="col-md-4">
-          <div class="mb-3">
-            <div class="bh-feature-icon bh-feature-icon--success">
-              <i class="bi bi-people-fill" aria-hidden="true"></i>
-            </div>
-          </div>
-          <h5 class="mb-2">Connect with Sellers</h5>
-          <p class="text-muted mb-3">Find trusted local sellers and browse their profiles</p>
-          <a href="{% url 'profiles_search' %}?account_type=seller" class="btn btn-outline-success">Find Sellers</a>
-        </div>
-        <div class="col-md-4">
-          <div class="mb-3">
-            <div class="bh-feature-icon bh-feature-icon--info">
-              <i class="bi bi-search" aria-hidden="true"></i>
-            </div>
-          </div>
-          <h5 class="mb-2">Easy Discovery</h5>
-          <p class="text-muted mb-3">Search by username or filter by account type</p>
-          <a href="{% url 'profiles_search' %}" class="btn btn-outline-primary">Search Profiles</a>
-        </div>
-        <div class="col-md-4">
-          <div class="mb-3">
-            <div class="bh-feature-icon bh-feature-icon--warn">
-              <i class="bi bi-star-fill" aria-hidden="true"></i>
-            </div>
-          </div>
-          <h5 class="mb-2">Active Community</h5>
-          <p class="text-muted mb-3">See who's most active and join the conversation</p>
-          <a href="{% url 'profiles_search' %}?sort_by=items_count" class="btn btn-outline-warning">Top Members</a>
-        </div>
+            <footer class="bh-chip-row" role="group" aria-label="Founder actions and status">
+              {% if founder.is_live %}
+                <span class="bh-chip" aria-label="Active founding member">
+                  <span class="bh-chip-dot" aria-hidden="true"></span>Crowned
+                </span>
+                <a class="bh-chip text-decoration-none" href="{{ founder.profile_url }}" aria-label="View {{ founder.display_name }}'s profile">
+                  <span class="bh-chip-dot" aria-hidden="true"></span>View profile
+                </a>
+                {% if user.is_authenticated and user.id == founder.user_id %}
+                  <a class="bh-chip bh-chip-edit text-decoration-none" href="{% url 'profile_edit' %}" aria-label="Edit your founder profile">
+                    <span class="bh-chip-dot" aria-hidden="true"></span>Edit seat
+                  </a>
+                {% endif %}
+              {% else %}
+                <span class="bh-chip" aria-label="Reserved seat for future founding member">
+                  <span class="bh-chip-dot" aria-hidden="true"></span>Reserved name
+                </span>
+              {% endif %}
+            </footer>
+          </article>
+        {% endfor %}
       </div>
-    </div>
-  </section>
+    </section>
   </div>
 {% endblock %}
